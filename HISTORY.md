@@ -83,7 +83,7 @@
 - `24b3526` — `feat(server): add audit logs listing endpoint`
 - `1464c6c` — `feat(auth): add logout and logout-all session revocation`
 - `13f7ff4` — `feat(auth): introduce refresh-token based session model`
-- `TBD` — auth rate-limit commit (будет добавлен после фиксации).
+- `bdeebe7` — `feat(auth): add brute-force rate limiting for auth endpoints`
 
 ### Планы
 
