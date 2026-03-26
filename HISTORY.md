@@ -96,6 +96,12 @@
   - env `AUDIT_LOG_RETENTION_DAYS` (`0` = выключено, `>0` = удаление старых логов)
   - метрика `syncnest_audit_logs_retention_deletions_total`
 - Добавлен интеграционный тест cleanup-удаления устаревших audit-логов.
+- Добавлен endpoint `GET /system/config` (runtime-config snapshot):
+  - `fileLockTtlSeconds`
+  - `cleanupIntervalSeconds`
+  - `auditLogRetentionDays`
+  - `auditLogRetentionEnabled`
+- Добавлен интеграционный тест `GET /system/config`.
 
 ### Решения
 
@@ -145,6 +151,7 @@
 - `0dbf1e3` — `feat(metrics): add endpoint-group labeled counters`
 - `a174be5` — `test(metrics): isolate in-memory counters with snapshot reset`
 - `c20ce95` — `feat(server): add audit log retention cleanup policy`
+- `3401582` — `feat(server): add runtime system config endpoint`
 
 ### Планы
 
@@ -155,4 +162,5 @@
 - Добавить low-cardinality labels для метрик endpoint групп (auth/storage/file-lock).
 - Добавить reset/isolated snapshot helper для in-memory metrics в тестах.
 - Добавить endpoint/инструмент просмотра retention-конфига и dry-run cleanup статистики.
+- Добавить `GET /system/config/cleanup-dry-run` с оценкой кандидатов на удаление.
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).
