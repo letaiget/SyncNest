@@ -3,29 +3,15 @@ import { env } from "../config/env.js";
 import { db } from "../db/sqlite.js";
 import { randomUUID } from "node:crypto";
 import { getAuthUser, requireAuth } from "../middleware/require-auth.js";
+import { requireSystemOwnerScope } from "../middleware/require-role.js";
 import { runCleanupPassOnce } from "../jobs/cleanup.job.js";
 import { incCounter } from "../metrics/metrics.js";
 
 export const systemConfigRouter = Router();
 systemConfigRouter.use(requireAuth);
+systemConfigRouter.use(requireSystemOwnerScope);
 
-function hasOwnedNetwork(userId: string): boolean {
-  const row = db
-    .prepare("SELECT 1 as ok FROM networks WHERE owner_user_id = ? LIMIT 1")
-    .get(userId) as { ok: number } | undefined;
-  return Boolean(row?.ok);
-}
-
-function canAccessSystemEndpoints(userId: string): boolean {
-  return hasOwnedNetwork(userId);
-}
-
-systemConfigRouter.get("/", (req, res) => {
-  const user = getAuthUser(req);
-  if (!canAccessSystemEndpoints(user.id)) {
-    return res.status(403).json({ error: "Forbidden system endpoint access" });
-  }
-
+systemConfigRouter.get("/", (_req, res) => {
   res.status(200).json({
     fileLockTtlSeconds: env.FILE_LOCK_TTL_SECONDS,
     cleanupIntervalSeconds: env.CLEANUP_INTERVAL_SECONDS,
@@ -34,12 +20,7 @@ systemConfigRouter.get("/", (req, res) => {
   });
 });
 
-systemConfigRouter.get("/cleanup-dry-run", (req, res) => {
-  const user = getAuthUser(req);
-  if (!canAccessSystemEndpoints(user.id)) {
-    return res.status(403).json({ error: "Forbidden system endpoint access" });
-  }
-
+systemConfigRouter.get("/cleanup-dry-run", (_req, res) => {
   const nowIso = new Date().toISOString();
   const verificationUsedBeforeIso = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const fileLockCutoffIso = new Date(Date.now() - env.FILE_LOCK_TTL_SECONDS * 1000).toISOString();
@@ -119,10 +100,6 @@ systemConfigRouter.get("/cleanup-dry-run", (req, res) => {
 systemConfigRouter.post("/cleanup/run", (req, res) => {
   try {
     const user = getAuthUser(req);
-    if (!canAccessSystemEndpoints(user.id)) {
-      return res.status(403).json({ error: "Forbidden system endpoint access" });
-    }
-
     const stats = runCleanupPassOnce();
     incCounter("cleanup_manual_runs_total");
 
