@@ -72,6 +72,7 @@
 - `POST /auth/register/request-code` — создать код подтверждения регистрации
 - `POST /auth/register/confirm` — завершить регистрацию по email-коду
 - `POST /auth/login` — вход по логину и паролю
+- `POST /auth/refresh` — обновить access-токен по refresh-токену
 - `GET /auth/me` — текущий пользователь по Bearer-токену
 - `POST /auth/logout` — завершить текущую сессию
 - `POST /auth/logout-all` — завершить все активные сессии пользователя

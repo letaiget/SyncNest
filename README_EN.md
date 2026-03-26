@@ -72,6 +72,7 @@ Initial version: `v0.1.0`
 - `POST /auth/register/request-code` — create sign-up verification code
 - `POST /auth/register/confirm` — complete registration via email code
 - `POST /auth/login` — sign in with username/password
+- `POST /auth/refresh` — rotate access token using refresh token
 - `GET /auth/me` — resolve current user from Bearer token
 - `POST /auth/logout` — terminate current session
 - `POST /auth/logout-all` — terminate all user sessions

@@ -41,6 +41,10 @@
 - Добавлены endpoints управления сессиями:
   - `POST /auth/logout` — завершение текущей сессии;
   - `POST /auth/logout-all` — завершение всех сессий пользователя.
+- Внедрена refresh-token стратегия:
+  - access token (`15 минут`) хранится в `access_tokens`;
+  - refresh token (`30 дней`) хранится в `sessions`;
+  - добавлен endpoint `POST /auth/refresh`.
 
 ### Решения
 
@@ -74,6 +78,7 @@
 - `29b8d67` — `chore(repo): untrack local design reference folder`
 - `24b3526` — `feat(server): add audit logs listing endpoint`
 - `1464c6c` — `feat(auth): add logout and logout-all session revocation`
+- `TBD` — refresh-token strategy commit (будет добавлен после фиксации).
 
 ### Планы
 

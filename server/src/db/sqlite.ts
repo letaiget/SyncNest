@@ -85,5 +85,20 @@ export function initializeDatabase(): void {
 
     CREATE INDEX IF NOT EXISTS idx_devices_network_id ON devices(network_id);
     CREATE INDEX IF NOT EXISTS idx_audit_logs_network_id ON audit_logs(network_id);
+
+    CREATE TABLE IF NOT EXISTS access_tokens (
+      id TEXT PRIMARY KEY,
+      session_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      token_hash TEXT UNIQUE NOT NULL,
+      expires_at TEXT NOT NULL,
+      revoked_at TEXT,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY(session_id) REFERENCES sessions(id),
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_access_tokens_user_id ON access_tokens(user_id);
+    CREATE INDEX IF NOT EXISTS idx_access_tokens_session_id ON access_tokens(session_id);
   `);
 }

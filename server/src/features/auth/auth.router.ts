@@ -6,7 +6,8 @@ import {
   getCurrentUserFromToken,
   login,
   logoutAllByUser,
-  logoutByToken,
+  logoutByAccessToken,
+  refreshAccessToken,
   requestRegistrationCode,
 } from "./auth.service.js";
 import { getAuthUser, requireAuth } from "../../middleware/require-auth.js";
@@ -25,6 +26,10 @@ const confirmSchema = z.object({
 const loginSchema = z.object({
   username: z.string().min(3).max(32),
   password: z.string().min(8).max(128),
+});
+
+const refreshSchema = z.object({
+  refreshToken: z.string().min(32),
 });
 
 function getBearerToken(rawHeader: string | undefined): string | null {
@@ -107,6 +112,26 @@ authRouter.post("/login", (req, res) => {
   }
 });
 
+authRouter.post("/refresh", (req, res) => {
+  const parsed = refreshSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: "Invalid request body",
+      details: parsed.error.flatten(),
+    });
+  }
+
+  try {
+    const refreshed = refreshAccessToken(parsed.data);
+    return res.status(200).json(refreshed);
+  } catch (error: unknown) {
+    if (error instanceof AuthError) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 authRouter.get("/me", (req, res) => {
   const token = getBearerToken(req.headers.authorization);
   if (!token) {
@@ -131,7 +156,7 @@ authRouter.post("/logout", (req, res) => {
   }
 
   try {
-    logoutByToken(token);
+    logoutByAccessToken(token);
     return res.status(200).json({ message: "Logged out" });
   } catch (error: unknown) {
     if (error instanceof AuthError) {
