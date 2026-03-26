@@ -3,6 +3,8 @@ import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
 import { authRouter } from "./features/auth/auth.router.js";
+import { devicesRouter } from "./features/devices/devices.router.js";
+import { networksRouter } from "./features/networks/networks.router.js";
 import { healthRouter } from "./routes/health.js";
 
 export function createApp() {
@@ -23,6 +25,8 @@ export function createApp() {
 
   app.use("/health", healthRouter);
   app.use("/auth", authRouter);
+  app.use("/networks", networksRouter);
+  app.use("/devices", devicesRouter);
 
   return app;
 }

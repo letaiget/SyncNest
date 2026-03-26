@@ -74,3 +74,8 @@
 - `POST /auth/register/confirm` — завершить регистрацию по email-коду
 - `POST /auth/login` — вход по логину и паролю
 - `GET /auth/me` — текущий пользователь по Bearer-токену
+- `GET /networks` — список сетей текущего пользователя
+- `POST /networks` — создать сеть
+- `GET /devices?networkId=...` — список устройств сети
+- `POST /devices/connect` — подключить устройство к сети
+- `POST /devices/:deviceId/disconnect` — отключить устройство от сети

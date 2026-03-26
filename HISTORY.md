@@ -29,6 +29,13 @@
   - подтверждение регистрации (`/auth/register/confirm`);
   - логин (`/auth/login`);
   - получение текущего пользователя по токену (`/auth/me`).
+- Добавлены модули `networks` и `devices`:
+  - создание/список сетей (`/networks`);
+  - подключение/отключение/список устройств (`/devices`).
+- Подключен серверный audit log для событий:
+  - `network.created`;
+  - `device.connected`;
+  - `device.disconnected`.
 
 ### Решения
 
@@ -42,6 +49,7 @@
 - Структура сервера: модульный каркас (`config`, `db`, `routes`, `app`, `index`) с инициализацией БД при старте.
 - Сессии хранятся в SQLite как хэш токена (`sha256`) с TTL 30 дней.
 - Код подтверждения регистрации действует 15 минут.
+- Доступ к `devices` ограничен владельцем сети (проверка `owner_user_id`).
 
 ### Баги
 
@@ -57,9 +65,11 @@
 - `100590a` — `docs: update history with initial commit hash`
 - `0964fa3` — `feat(server): bootstrap TypeScript API and SQLite init`
 - `00acb25` — `feat(server): add authentication module and session flow`
+- `TBD` — networks/devices + audit log commit (будет добавлен после фиксации).
 
 ### Планы
 
 - Расширить API сервера модулями auth/devices/networks.
 - Подключить реальную отправку email-кода подтверждения (вместо текущего dev-ответа).
+- Добавить endpoints для чтения `audit_logs` в клиентской вкладке логов.
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).

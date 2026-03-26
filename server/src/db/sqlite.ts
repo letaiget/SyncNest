@@ -65,5 +65,25 @@ export function initializeDatabase(): void {
       created_at TEXT NOT NULL,
       FOREIGN KEY(user_id) REFERENCES users(id)
     );
+
+    CREATE TABLE IF NOT EXISTS devices (
+      id TEXT PRIMARY KEY,
+      network_id TEXT NOT NULL,
+      owner_user_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      computer_name TEXT NOT NULL,
+      ip_address TEXT NOT NULL,
+      connection_type TEXT NOT NULL,
+      status TEXT NOT NULL,
+      last_seen_at TEXT,
+      disconnected_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY(network_id) REFERENCES networks(id),
+      FOREIGN KEY(owner_user_id) REFERENCES users(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_devices_network_id ON devices(network_id);
+    CREATE INDEX IF NOT EXISTS idx_audit_logs_network_id ON audit_logs(network_id);
   `);
 }

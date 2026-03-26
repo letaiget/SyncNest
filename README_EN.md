@@ -74,3 +74,8 @@ Initial version: `v0.1.0`
 - `POST /auth/register/confirm` — complete registration via email code
 - `POST /auth/login` — sign in with username/password
 - `GET /auth/me` — resolve current user from Bearer token
+- `GET /networks` — list current user networks
+- `POST /networks` — create network
+- `GET /devices?networkId=...` — list devices in network
+- `POST /devices/connect` — connect device to network
+- `POST /devices/:deviceId/disconnect` — disconnect device from network
