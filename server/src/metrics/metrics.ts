@@ -5,6 +5,7 @@ type CounterKey =
   | "storage_errors_total"
   | "cleanup_runs_total"
   | "cleanup_changes_total"
+  | "audit_logs_retention_deletions_total"
   | "lock_ttl_expirations_total"
   | "lock_heartbeat_renewed_total"
   | "lock_heartbeat_rejected_total";
@@ -19,6 +20,7 @@ const counters: Record<CounterKey, number> = {
   storage_errors_total: 0,
   cleanup_runs_total: 0,
   cleanup_changes_total: 0,
+  audit_logs_retention_deletions_total: 0,
   lock_ttl_expirations_total: 0,
   lock_heartbeat_renewed_total: 0,
   lock_heartbeat_rejected_total: 0,
@@ -92,6 +94,9 @@ export function getMetricsText(): string {
     "# HELP syncnest_cleanup_changes_total Total records changed by cleanup job",
     "# TYPE syncnest_cleanup_changes_total counter",
     `syncnest_cleanup_changes_total ${counters.cleanup_changes_total}`,
+    "# HELP syncnest_audit_logs_retention_deletions_total Total audit logs deleted by retention cleanup",
+    "# TYPE syncnest_audit_logs_retention_deletions_total counter",
+    `syncnest_audit_logs_retention_deletions_total ${counters.audit_logs_retention_deletions_total}`,
     "# HELP syncnest_lock_ttl_expirations_total Total file locks auto-expired by TTL on access checks",
     "# TYPE syncnest_lock_ttl_expirations_total counter",
     `syncnest_lock_ttl_expirations_total ${counters.lock_ttl_expirations_total}`,

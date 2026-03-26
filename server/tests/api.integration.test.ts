@@ -533,4 +533,62 @@ describe("SyncNest API integration", () => {
     expect(afterFileLockReq - before.endpointCounters.file_lock.requests).toBe(1);
     expect(afterAuthErr - before.endpointCounters.auth.errors).toBe(1);
   });
+
+  it("cleanup pass deletes old audit logs by retention policy", async () => {
+    const before = getMetricsSnapshot();
+    const owner = await registerAndLogin({
+      username: "retention-owner",
+      email: "retention-owner@example.com",
+    });
+
+    const createNetworkRes = await request(app)
+      .post("/networks")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({ name: "Retention Network" });
+    expect(createNetworkRes.status).toBe(201);
+    const networkId = createNetworkRes.body.networkId as string;
+
+    const connectRes = await request(app)
+      .post("/devices/connect")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({
+        networkId,
+        name: "MacBook",
+        computerName: "MarkBook",
+        ipAddress: "192.168.1.15",
+        connectionType: "local",
+      });
+    expect(connectRes.status).toBe(201);
+
+    const initialCount = (
+      db.prepare("SELECT COUNT(*) as count FROM audit_logs WHERE network_id = ?").get(networkId) as { count: number }
+    ).count;
+    expect(initialCount).toBeGreaterThanOrEqual(2);
+
+    const oldIso = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+    db.prepare(
+      `
+      UPDATE audit_logs
+      SET created_at = @oldIso
+      WHERE id IN (
+        SELECT id FROM audit_logs
+        WHERE network_id = @networkId
+        ORDER BY created_at ASC
+        LIMIT 1
+      )
+      `
+    ).run({ oldIso, networkId });
+
+    runCleanupPassOnce();
+
+    const afterCount = (
+      db.prepare("SELECT COUNT(*) as count FROM audit_logs WHERE network_id = ?").get(networkId) as { count: number }
+    ).count;
+    expect(afterCount).toBe(initialCount - 1);
+
+    const after = getMetricsSnapshot();
+    expect(
+      after.counters.audit_logs_retention_deletions_total - before.counters.audit_logs_retention_deletions_total
+    ).toBe(1);
+  });
 });
