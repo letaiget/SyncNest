@@ -2,6 +2,7 @@ import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
+import { auditLogsRouter } from "./features/audit-logs/audit-logs.router.js";
 import { authRouter } from "./features/auth/auth.router.js";
 import { devicesRouter } from "./features/devices/devices.router.js";
 import { networksRouter } from "./features/networks/networks.router.js";
@@ -27,6 +28,7 @@ export function createApp() {
   app.use("/auth", authRouter);
   app.use("/networks", networksRouter);
   app.use("/devices", devicesRouter);
+  app.use("/audit-logs", auditLogsRouter);
 
   return app;
 }

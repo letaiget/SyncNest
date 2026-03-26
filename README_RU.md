@@ -78,3 +78,4 @@
 - `GET /devices?networkId=...` — список устройств сети
 - `POST /devices/connect` — подключить устройство к сети
 - `POST /devices/:deviceId/disconnect` — отключить устройство от сети
+- `GET /audit-logs?networkId=...&page=...&pageSize=...` — чтение серверных логов сети с пагинацией и фильтрами

@@ -78,3 +78,4 @@ Initial version: `v0.1.0`
 - `GET /devices?networkId=...` — list devices in network
 - `POST /devices/connect` — connect device to network
 - `POST /devices/:deviceId/disconnect` — disconnect device from network
+- `GET /audit-logs?networkId=...&page=...&pageSize=...` — read network audit logs with pagination and filters
