@@ -114,6 +114,10 @@
   - `syncnest_cleanup_manual_runs_total`
   - `syncnest_cleanup_manual_errors_total`
 - Добавлен интеграционный тест для manual cleanup trigger (`401` без токена + успешный запуск + audit + metrics).
+- Введена owner-scope политика для system endpoints:
+  - `GET /system/config`, `GET /system/config/cleanup-dry-run`, `POST /system/config/cleanup/run`
+    доступны только авторизованным пользователям, владеющим хотя бы одной сетью
+  - добавлены интеграционные проверки на `401` и `403` для system endpoints.
 
 ### Решения
 
@@ -166,6 +170,7 @@
 - `3401582` — `feat(server): add runtime system config endpoint`
 - `d5106a7` — `feat(server): add cleanup dry-run system endpoint`
 - `f07f4b1` — `feat(server): add manual cleanup trigger endpoint`
+- `89a6864` — `feat(server): enforce owner-scope access for system endpoints`
 
 ### Планы
 
@@ -178,4 +183,5 @@
 - Добавить endpoint/инструмент просмотра retention-конфига и dry-run cleanup статистики.
 - Добавить ручной trigger endpoint для cleanup pass (admin-only, с audit event).
 - Добавить роль/политику доступа для system endpoints (owner/admin scope).
+- Добавить централизованный RBAC middleware для ролей (`owner`, `admin`) с переиспользованием в роутерах.
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).
