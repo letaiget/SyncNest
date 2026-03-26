@@ -112,7 +112,7 @@
 - `764feb0` — `feat(storage): add file-lock heartbeat and TTL expiration`
 - `710f17a` — `feat(server): add background cleanup job for stale records`
 - `7a168aa` — `feat(server): add prometheus-style metrics endpoint and counters`
-- `TBD` — integration tests commit (будет добавлен после фиксации).
+- `1d92b6e` — `test(server): add integration tests for core API flows`
 
 ### Планы
 
