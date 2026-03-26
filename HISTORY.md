@@ -102,7 +102,7 @@
 - `7a173fe` — `feat(storage): add folders and files metadata APIs with trash`
 - `d6f8753` — `feat(storage): add file lock API for edit ownership`
 - `764feb0` — `feat(storage): add file-lock heartbeat and TTL expiration`
-- `TBD` — background cleanup job commit (будет добавлен после фиксации).
+- `710f17a` — `feat(server): add background cleanup job for stale records`
 
 ### Планы
 
