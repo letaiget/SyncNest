@@ -153,6 +153,56 @@ describe("SyncNest API integration", () => {
     });
   });
 
+  it("returns cleanup dry-run candidate counts", async () => {
+    const owner = await registerAndLogin({
+      username: "dryrun-owner",
+      email: "dryrun-owner@example.com",
+    });
+
+    const createNetworkRes = await request(app)
+      .post("/networks")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({ name: "Dry Run Network" });
+    expect(createNetworkRes.status).toBe(201);
+    const networkId = createNetworkRes.body.networkId as string;
+
+    const connectRes = await request(app)
+      .post("/devices/connect")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({
+        networkId,
+        name: "DryRunDevice",
+        computerName: "DryRunMac",
+        ipAddress: "192.168.1.100",
+        connectionType: "local",
+      });
+    expect(connectRes.status).toBe(201);
+
+    const oldIso = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+    db.prepare(
+      `
+      UPDATE audit_logs
+      SET created_at = @oldIso
+      WHERE id IN (
+        SELECT id FROM audit_logs
+        WHERE network_id = @networkId
+        ORDER BY created_at ASC
+        LIMIT 1
+      )
+      `
+    ).run({ oldIso, networkId });
+
+    const dryRunRes = await request(app).get("/system/config/cleanup-dry-run");
+    expect(dryRunRes.status).toBe(200);
+    expect(dryRunRes.body.generatedAt).toBeTruthy();
+    expect(dryRunRes.body.auditLogRetentionEnabled).toBe(true);
+    expect(dryRunRes.body.candidates.auditLogsForDeletion).toBe(1);
+    expect(dryRunRes.body.candidates.expiredVerificationCodes).toBe(0);
+    expect(dryRunRes.body.candidates.expiredFileLocks).toBe(0);
+    expect(dryRunRes.body.candidates.expiredAccessTokens).toBe(0);
+    expect(dryRunRes.body.totals.allCandidates).toBe(1);
+  });
+
   it("supports network + storage + file lock flow", async () => {
     const requestCodeRes = await request(app).post("/auth/register/request-code").send({
       username: "owner",
