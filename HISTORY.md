@@ -88,7 +88,7 @@
 - `1464c6c` — `feat(auth): add logout and logout-all session revocation`
 - `13f7ff4` — `feat(auth): introduce refresh-token based session model`
 - `bdeebe7` — `feat(auth): add brute-force rate limiting for auth endpoints`
-- `TBD` — storage folders/files/trash API commit (будет добавлен после фиксации).
+- `7a173fe` — `feat(storage): add folders and files metadata APIs with trash`
 
 ### Планы
 
