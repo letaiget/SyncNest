@@ -10,6 +10,7 @@ type CounterKey =
   | "lock_heartbeat_rejected_total";
 
 type EndpointGroup = "auth" | "storage" | "file_lock";
+type EndpointKind = "requests" | "errors";
 
 const counters: Record<CounterKey, number> = {
   auth_requests_total: 0,
@@ -35,8 +36,35 @@ export function incCounter(key: CounterKey, value = 1): void {
   counters[key] += value;
 }
 
-export function incEndpointCounter(group: EndpointGroup, kind: "requests" | "errors", value = 1): void {
+export function incEndpointCounter(group: EndpointGroup, kind: EndpointKind, value = 1): void {
   endpointCounters[group][kind] += value;
+}
+
+export type MetricsSnapshot = {
+  counters: Record<CounterKey, number>;
+  endpointCounters: Record<EndpointGroup, Record<EndpointKind, number>>;
+};
+
+export function getMetricsSnapshot(): MetricsSnapshot {
+  return {
+    counters: { ...counters },
+    endpointCounters: {
+      auth: { ...endpointCounters.auth },
+      storage: { ...endpointCounters.storage },
+      file_lock: { ...endpointCounters.file_lock },
+    },
+  };
+}
+
+export function resetMetricsCounters(): void {
+  (Object.keys(counters) as CounterKey[]).forEach((key) => {
+    counters[key] = 0;
+  });
+
+  endpointGroups.forEach((group) => {
+    endpointCounters[group].requests = 0;
+    endpointCounters[group].errors = 0;
+  });
 }
 
 export function getMetricsText(): string {

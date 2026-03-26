@@ -4,15 +4,10 @@ import { createApp } from "../src/app.js";
 import { initializeDatabase, db } from "../src/db/sqlite.js";
 import { resetRateLimitBuckets } from "../src/middleware/rate-limit.js";
 import { runCleanupPassOnce } from "../src/jobs/cleanup.job.js";
+import { getMetricsSnapshot, resetMetricsCounters } from "../src/metrics/metrics.js";
 
 const app = createApp();
 const DEFAULT_PASSWORD = "StrongPass123";
-
-type LockMetrics = {
-  ttlExpirations: number;
-  heartbeatRenewed: number;
-  heartbeatRejected: number;
-};
 
 function resetDatabase(): void {
   db.exec(`
@@ -89,19 +84,6 @@ async function prepareNetworkFolderFile(accessToken: string) {
   return { networkId, folderId, fileId };
 }
 
-function extractMetricValue(metricsText: string, metricName: string): number {
-  const line = metricsText
-    .split("\n")
-    .find((entry) => entry.startsWith(`${metricName} `));
-
-  if (!line) {
-    throw new Error(`Metric not found: ${metricName}`);
-  }
-
-  const rawValue = line.split(" ")[1];
-  return Number.parseFloat(rawValue);
-}
-
 function extractLabeledMetricValue(
   metricsText: string,
   metricName: string,
@@ -118,18 +100,6 @@ function extractLabeledMetricValue(
   return Number.parseFloat(rawValue);
 }
 
-async function getLockMetrics(): Promise<LockMetrics> {
-  const metricsRes = await request(app).get("/metrics");
-  expect(metricsRes.status).toBe(200);
-
-  const body = metricsRes.text as string;
-  return {
-    ttlExpirations: extractMetricValue(body, "syncnest_lock_ttl_expirations_total"),
-    heartbeatRenewed: extractMetricValue(body, "syncnest_lock_heartbeat_renewed_total"),
-    heartbeatRejected: extractMetricValue(body, "syncnest_lock_heartbeat_rejected_total"),
-  };
-}
-
 describe("SyncNest API integration", () => {
   beforeAll(() => {
     initializeDatabase();
@@ -138,6 +108,7 @@ describe("SyncNest API integration", () => {
   beforeEach(() => {
     resetDatabase();
     resetRateLimitBuckets();
+    resetMetricsCounters();
   });
 
   it("completes auth flow and can access protected profile route", async () => {
@@ -447,7 +418,7 @@ describe("SyncNest API integration", () => {
   });
 
   it("updates lock lifecycle metrics for ttl expiration and heartbeat outcomes", async () => {
-    const before = await getLockMetrics();
+    const before = getMetricsSnapshot();
     const owner = await registerAndLogin({
       username: "metrics-owner",
       email: "metrics-owner@example.com",
@@ -496,40 +467,14 @@ describe("SyncNest API integration", () => {
     expect(heartbeatRejectedRes.status).toBe(200);
     expect(heartbeatRejectedRes.body.renewed).toBe(false);
 
-    const after = await getLockMetrics();
-    expect(after.ttlExpirations).toBeGreaterThanOrEqual(before.ttlExpirations + 1);
-    expect(after.heartbeatRenewed).toBeGreaterThanOrEqual(before.heartbeatRenewed + 1);
-    expect(after.heartbeatRejected).toBeGreaterThanOrEqual(before.heartbeatRejected + 1);
+    const after = getMetricsSnapshot();
+    expect(after.counters.lock_ttl_expirations_total - before.counters.lock_ttl_expirations_total).toBe(1);
+    expect(after.counters.lock_heartbeat_renewed_total - before.counters.lock_heartbeat_renewed_total).toBe(1);
+    expect(after.counters.lock_heartbeat_rejected_total - before.counters.lock_heartbeat_rejected_total).toBe(1);
   });
 
   it("exports low-cardinality endpoint group metrics", async () => {
-    const beforeMetricsRes = await request(app).get("/metrics");
-    expect(beforeMetricsRes.status).toBe(200);
-    const beforeMetrics = beforeMetricsRes.text as string;
-    const beforeAuthReq = extractLabeledMetricValue(
-      beforeMetrics,
-      "syncnest_endpoint_requests_total",
-      "group",
-      "auth"
-    );
-    const beforeStorageReq = extractLabeledMetricValue(
-      beforeMetrics,
-      "syncnest_endpoint_requests_total",
-      "group",
-      "storage"
-    );
-    const beforeFileLockReq = extractLabeledMetricValue(
-      beforeMetrics,
-      "syncnest_endpoint_requests_total",
-      "group",
-      "file_lock"
-    );
-    const beforeAuthErr = extractLabeledMetricValue(
-      beforeMetrics,
-      "syncnest_endpoint_errors_total",
-      "group",
-      "auth"
-    );
+    const before = getMetricsSnapshot();
 
     const badLoginRes = await request(app).post("/auth/login").send({
       username: "missing-user",
@@ -583,9 +528,9 @@ describe("SyncNest API integration", () => {
       "auth"
     );
 
-    expect(afterAuthReq).toBeGreaterThanOrEqual(beforeAuthReq + 1);
-    expect(afterStorageReq).toBeGreaterThanOrEqual(beforeStorageReq + 1);
-    expect(afterFileLockReq).toBeGreaterThanOrEqual(beforeFileLockReq + 1);
-    expect(afterAuthErr).toBeGreaterThanOrEqual(beforeAuthErr + 1);
+    expect(afterAuthReq - before.endpointCounters.auth.requests).toBe(4);
+    expect(afterStorageReq - before.endpointCounters.storage.requests).toBe(3);
+    expect(afterFileLockReq - before.endpointCounters.file_lock.requests).toBe(1);
+    expect(afterAuthErr - before.endpointCounters.auth.errors).toBe(1);
   });
 });
