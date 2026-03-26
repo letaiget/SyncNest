@@ -96,3 +96,6 @@ Initial version: `v0.1.0`
   - releases stale file locks
   - revokes expired access tokens
 - `GET /metrics` — export baseline server metrics in Prometheus-compatible text format
+- API integration tests (`vitest + supertest`) for:
+  - auth flow
+  - network + storage + file-lock flow

@@ -149,3 +149,6 @@ export function initializeDatabase(): void {
     CREATE INDEX IF NOT EXISTS idx_file_locks_released_at ON file_locks(released_at);
   `);
 }
+
+// Ensure schema exists before feature modules prepare SQL statements.
+initializeDatabase();

@@ -28,3 +28,6 @@ pnpm-debug.log*
 
 # Local-only design sources
 MacOS App Design/
+
+# Runtime databases
+server/data/

@@ -96,3 +96,6 @@
   - освобождает протухшие file-lock
   - ревокает истекшие access-токены
 - `GET /metrics` — экспорт базовых серверных метрик в Prometheus-совместимом text формате
+- Интеграционные тесты API (`vitest + supertest`) для сценариев:
+  - auth flow
+  - network + storage + file-lock flow

@@ -69,6 +69,9 @@
   - storage+file-lock requests/errors
   - cleanup runs/changes
   - uptime
+- Добавлены интеграционные API-тесты (`vitest + supertest`):
+  - auth flow
+  - network + storage + file-lock flow
 
 ### Решения
 
@@ -109,6 +112,7 @@
 - `764feb0` — `feat(storage): add file-lock heartbeat and TTL expiration`
 - `710f17a` — `feat(server): add background cleanup job for stale records`
 - `7a168aa` — `feat(server): add prometheus-style metrics endpoint and counters`
+- `TBD` — integration tests commit (будет добавлен после фиксации).
 
 ### Планы
 
@@ -116,4 +120,5 @@
 - Подключить реальную отправку email-кода подтверждения (вместо текущего dev-ответа).
 - Добавить постоянное (distributed) rate-limit хранилище для multi-instance деплоя.
 - Добавить детализацию метрик по endpoint labels (low-cardinality).
+- Расширить интеграционные тесты кейсами ошибок и конфликтов lock.
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).
