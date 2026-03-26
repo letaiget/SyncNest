@@ -66,3 +66,11 @@
 
 - `MacOS App Design/` — референсный UI-макет (Vite + React)
 - `server/` — каркас центрального сервера (`Node.js + TypeScript + SQLite`)
+
+### Что уже есть в сервере
+
+- `GET /health` — проверка состояния сервера
+- `POST /auth/register/request-code` — создать код подтверждения регистрации
+- `POST /auth/register/confirm` — завершить регистрацию по email-коду
+- `POST /auth/login` — вход по логину и паролю
+- `GET /auth/me` — текущий пользователь по Bearer-токену

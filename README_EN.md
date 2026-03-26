@@ -66,3 +66,11 @@ Initial version: `v0.1.0`
 
 - `MacOS App Design/` — reference UI prototype (Vite + React)
 - `server/` — central server bootstrap (`Node.js + TypeScript + SQLite`)
+
+### Implemented server endpoints
+
+- `GET /health` — server health check
+- `POST /auth/register/request-code` — create sign-up verification code
+- `POST /auth/register/confirm` — complete registration via email code
+- `POST /auth/login` — sign in with username/password
+- `GET /auth/me` — resolve current user from Bearer token

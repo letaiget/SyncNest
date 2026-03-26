@@ -24,6 +24,11 @@
 - Подтверждены целевые платформы: desktop first (`macOS`, `Windows`), mobile second (`iOS`, `Android`).
 - Добавлен базовый пакет репозиторной документации.
 - Добавлен стартовый каркас `server/` (`Node.js + TypeScript + SQLite`) с health-check API.
+- Добавлен базовый модуль `auth`:
+  - запрос кода регистрации (`/auth/register/request-code`);
+  - подтверждение регистрации (`/auth/register/confirm`);
+  - логин (`/auth/login`);
+  - получение текущего пользователя по токену (`/auth/me`).
 
 ### Решения
 
@@ -35,6 +40,8 @@
 - Коммиты: `Conventional Commits`, английский язык.
 - Лицензия: `MIT`.
 - Структура сервера: модульный каркас (`config`, `db`, `routes`, `app`, `index`) с инициализацией БД при старте.
+- Сессии хранятся в SQLite как хэш токена (`sha256`) с TTL 30 дней.
+- Код подтверждения регистрации действует 15 минут.
 
 ### Баги
 
@@ -48,9 +55,11 @@
 
 - `b66ef39` — `docs: bootstrap SyncNest repository documentation`
 - `100590a` — `docs: update history with initial commit hash`
-- `TBD` — серверный bootstrap commit (будет добавлен после фиксации).
+- `0964fa3` — `feat(server): bootstrap TypeScript API and SQLite init`
+- `TBD` — auth module commit (будет добавлен после фиксации).
 
 ### Планы
 
 - Расширить API сервера модулями auth/devices/networks.
+- Подключить реальную отправку email-кода подтверждения (вместо текущего dev-ответа).
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).

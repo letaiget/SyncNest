@@ -21,3 +21,7 @@ pnpm-debug.log*
 
 # Logs
 *.log
+
+# Local secret helper files
+ключ
+Потом удалить
