@@ -93,6 +93,16 @@ const findSessionByTokenStmt = db.prepare(`
   WHERE s.token_hash = ?
   LIMIT 1
 `);
+const revokeSessionByTokenStmt = db.prepare(`
+  UPDATE sessions
+  SET revoked_at = @revoked_at
+  WHERE token_hash = @token_hash AND revoked_at IS NULL
+`);
+const revokeAllSessionsByUserStmt = db.prepare(`
+  UPDATE sessions
+  SET revoked_at = @revoked_at
+  WHERE user_id = @user_id AND revoked_at IS NULL
+`);
 
 export class AuthError extends Error {
   constructor(
@@ -266,5 +276,27 @@ export function getCurrentUserFromToken(token: string): {
     username: session.username,
     email: session.email,
     emailVerified: session.email_verified === 1,
+  };
+}
+
+export function logoutByToken(token: string): void {
+  const result = revokeSessionByTokenStmt.run({
+    revoked_at: nowIso(),
+    token_hash: hashToken(token),
+  });
+
+  if (result.changes === 0) {
+    throw new AuthError("Invalid access token", 401);
+  }
+}
+
+export function logoutAllByUser(userId: string): { revokedSessions: number } {
+  const result = revokeAllSessionsByUserStmt.run({
+    revoked_at: nowIso(),
+    user_id: userId,
+  });
+
+  return {
+    revokedSessions: result.changes,
   };
 }

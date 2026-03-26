@@ -5,8 +5,11 @@ import {
   confirmRegistration,
   getCurrentUserFromToken,
   login,
+  logoutAllByUser,
+  logoutByToken,
   requestRegistrationCode,
 } from "./auth.service.js";
+import { getAuthUser, requireAuth } from "../../middleware/require-auth.js";
 
 const requestCodeSchema = z.object({
   username: z.string().min(3).max(32),
@@ -113,6 +116,38 @@ authRouter.get("/me", (req, res) => {
   try {
     const user = getCurrentUserFromToken(token);
     return res.status(200).json({ user });
+  } catch (error: unknown) {
+    if (error instanceof AuthError) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+authRouter.post("/logout", (req, res) => {
+  const token = getBearerToken(req.headers.authorization);
+  if (!token) {
+    return res.status(401).json({ error: "Missing or invalid Authorization header" });
+  }
+
+  try {
+    logoutByToken(token);
+    return res.status(200).json({ message: "Logged out" });
+  } catch (error: unknown) {
+    if (error instanceof AuthError) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+authRouter.post("/logout-all", requireAuth, (req, res) => {
+  try {
+    const result = logoutAllByUser(getAuthUser(req).id);
+    return res.status(200).json({
+      message: "Logged out from all sessions",
+      revokedSessions: result.revokedSessions,
+    });
   } catch (error: unknown) {
     if (error instanceof AuthError) {
       return res.status(error.statusCode).json({ error: error.message });

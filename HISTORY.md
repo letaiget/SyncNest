@@ -38,6 +38,9 @@
   - `device.disconnected`.
 - Папка `MacOS App Design/` удалена из отслеживания git и добавлена в `.gitignore` (локальный референс).
 - Добавлен endpoint чтения логов: `GET /audit-logs` (пагинация + фильтры `eventType` и `status`).
+- Добавлены endpoints управления сессиями:
+  - `POST /auth/logout` — завершение текущей сессии;
+  - `POST /auth/logout-all` — завершение всех сессий пользователя.
 
 ### Решения
 
@@ -70,10 +73,10 @@
 - `ed1e65a` — `feat(server): add networks and devices APIs with audit events`
 - `29b8d67` — `chore(repo): untrack local design reference folder`
 - `24b3526` — `feat(server): add audit logs listing endpoint`
+- `TBD` — logout/logout-all endpoints commit (будет добавлен после фиксации).
 
 ### Планы
 
 - Расширить API сервера модулями auth/devices/networks.
 - Подключить реальную отправку email-кода подтверждения (вместо текущего dev-ответа).
-- Добавить endpoint revoke/logout для сессий пользователя.
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).
