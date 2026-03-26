@@ -102,6 +102,10 @@
   - `auditLogRetentionDays`
   - `auditLogRetentionEnabled`
 - Добавлен интеграционный тест `GET /system/config`.
+- Добавлен endpoint `GET /system/config/cleanup-dry-run`:
+  - оценивает кандидатов на cleanup без изменения данных в БД
+  - считает `expiredVerificationCodes`, `expiredFileLocks`, `expiredAccessTokens`, `auditLogsForDeletion`
+- Добавлен интеграционный тест `GET /system/config/cleanup-dry-run`.
 
 ### Решения
 
@@ -152,6 +156,7 @@
 - `a174be5` — `test(metrics): isolate in-memory counters with snapshot reset`
 - `c20ce95` — `feat(server): add audit log retention cleanup policy`
 - `3401582` — `feat(server): add runtime system config endpoint`
+- `d5106a7` — `feat(server): add cleanup dry-run system endpoint`
 
 ### Планы
 
@@ -162,5 +167,5 @@
 - Добавить low-cardinality labels для метрик endpoint групп (auth/storage/file-lock).
 - Добавить reset/isolated snapshot helper для in-memory metrics в тестах.
 - Добавить endpoint/инструмент просмотра retention-конфига и dry-run cleanup статистики.
-- Добавить `GET /system/config/cleanup-dry-run` с оценкой кандидатов на удаление.
+- Добавить ручной trigger endpoint для cleanup pass (admin-only, с audit event).
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).
