@@ -91,3 +91,7 @@ Initial version: `v0.1.0`
 - `GET /file-locks/status?networkId=...&fileId=...` — check file lock status
 - `POST /file-locks/lock` / `POST /file-locks/unlock` — acquire/release edit lock
 - `POST /file-locks/heartbeat` — renew lock heartbeat (lock expires by TTL without it)
+- Background cleanup job:
+  - removes expired email verification codes
+  - releases stale file locks
+  - revokes expired access tokens

@@ -60,6 +60,10 @@
 - Добавлены TTL + heartbeat для lock:
   - истечение lock по `FILE_LOCK_TTL_SECONDS` (по умолчанию 120 сек)
   - endpoint `POST /file-locks/heartbeat` для продления lock
+- Добавлен background cleanup job:
+  - очистка просроченных `email_verification_codes`
+  - автоосвобождение протухших `file_locks`
+  - ревокация истекших `access_tokens`
 
 ### Решения
 
@@ -98,11 +102,12 @@
 - `7a173fe` — `feat(storage): add folders and files metadata APIs with trash`
 - `d6f8753` — `feat(storage): add file lock API for edit ownership`
 - `764feb0` — `feat(storage): add file-lock heartbeat and TTL expiration`
+- `TBD` — background cleanup job commit (будет добавлен после фиксации).
 
 ### Планы
 
 - Расширить API сервера модулями auth/devices/networks.
 - Подключить реальную отправку email-кода подтверждения (вместо текущего dev-ответа).
 - Добавить постоянное (distributed) rate-limit хранилище для multi-instance деплоя.
-- Добавить отдельный lock cleanup job для фоновой очистки протухших lock.
+- Добавить метрики (prometheus-style) по cleanup job и auth/storage операциям.
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).

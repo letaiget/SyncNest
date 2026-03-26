@@ -2,9 +2,11 @@ import { createApp } from "./app.js";
 import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
 import { initializeDatabase } from "./db/sqlite.js";
+import { startCleanupJob } from "./jobs/cleanup.job.js";
 
 async function bootstrap() {
   initializeDatabase();
+  startCleanupJob();
 
   const app = createApp();
 
