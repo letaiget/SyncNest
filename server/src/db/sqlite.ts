@@ -131,5 +131,21 @@ export function initializeDatabase(): void {
     CREATE INDEX IF NOT EXISTS idx_folders_deleted_at ON folders(deleted_at);
     CREATE INDEX IF NOT EXISTS idx_files_network_folder ON files(network_id, folder_id);
     CREATE INDEX IF NOT EXISTS idx_files_deleted_at ON files(deleted_at);
+
+    CREATE TABLE IF NOT EXISTS file_locks (
+      id TEXT PRIMARY KEY,
+      network_id TEXT NOT NULL,
+      file_id TEXT NOT NULL UNIQUE,
+      lock_owner_user_id TEXT NOT NULL,
+      lock_owner_device_id TEXT,
+      acquired_at TEXT NOT NULL,
+      released_at TEXT,
+      FOREIGN KEY(network_id) REFERENCES networks(id),
+      FOREIGN KEY(file_id) REFERENCES files(id),
+      FOREIGN KEY(lock_owner_user_id) REFERENCES users(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_file_locks_network_id ON file_locks(network_id);
+    CREATE INDEX IF NOT EXISTS idx_file_locks_released_at ON file_locks(released_at);
   `);
 }

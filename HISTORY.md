@@ -53,6 +53,10 @@
   - папки (`list/create/update/delete/restore`)
   - файлы (`list/create/update/delete/restore`)
   - корзина (`GET /storage/trash`)
+- Добавлен `file-lock` API:
+  - `POST /file-locks/lock` — блокировка файла на редактирование
+  - `POST /file-locks/unlock` — снятие блокировки владельцем
+  - `GET /file-locks/status` — проверка текущего состояния lock
 
 ### Решения
 
@@ -89,11 +93,12 @@
 - `13f7ff4` — `feat(auth): introduce refresh-token based session model`
 - `bdeebe7` — `feat(auth): add brute-force rate limiting for auth endpoints`
 - `7a173fe` — `feat(storage): add folders and files metadata APIs with trash`
+- `TBD` — file-lock API commit (будет добавлен после фиксации).
 
 ### Планы
 
 - Расширить API сервера модулями auth/devices/networks.
 - Подключить реальную отправку email-кода подтверждения (вместо текущего dev-ответа).
 - Добавить постоянное (distributed) rate-limit хранилище для multi-instance деплоя.
-- Добавить file-lock API (первый открыл на редактирование -> остальные read-only).
+- Добавить TTL/heartbeat для lock (автоосвобождение при падении клиента).
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).

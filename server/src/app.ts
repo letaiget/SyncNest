@@ -5,6 +5,7 @@ import morgan from "morgan";
 import { auditLogsRouter } from "./features/audit-logs/audit-logs.router.js";
 import { authRouter } from "./features/auth/auth.router.js";
 import { devicesRouter } from "./features/devices/devices.router.js";
+import { fileLocksRouter } from "./features/file-locks/file-locks.router.js";
 import { networksRouter } from "./features/networks/networks.router.js";
 import { storageRouter } from "./features/storage/storage.router.js";
 import { healthRouter } from "./routes/health.js";
@@ -29,6 +30,7 @@ export function createApp() {
   app.use("/auth", authRouter);
   app.use("/networks", networksRouter);
   app.use("/devices", devicesRouter);
+  app.use("/file-locks", fileLocksRouter);
   app.use("/audit-logs", auditLogsRouter);
   app.use("/storage", storageRouter);
 

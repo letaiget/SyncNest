@@ -88,3 +88,5 @@ Initial version: `v0.1.0`
 - `GET /storage/files` / `POST /storage/files` / `PATCH /storage/files/:fileId` — manage file metadata
 - `DELETE /storage/files/:fileId` / `POST /storage/files/:fileId/restore` — file trash/restore
 - `GET /storage/trash?networkId=...` — list network trash items
+- `GET /file-locks/status?networkId=...&fileId=...` — check file lock status
+- `POST /file-locks/lock` / `POST /file-locks/unlock` — acquire/release edit lock
