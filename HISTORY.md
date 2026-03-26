@@ -65,7 +65,7 @@
 - `100590a` — `docs: update history with initial commit hash`
 - `0964fa3` — `feat(server): bootstrap TypeScript API and SQLite init`
 - `00acb25` — `feat(server): add authentication module and session flow`
-- `TBD` — networks/devices + audit log commit (будет добавлен после фиксации).
+- `ed1e65a` — `feat(server): add networks and devices APIs with audit events`
 
 ### Планы
 
