@@ -143,7 +143,19 @@ describe("SyncNest API integration", () => {
   });
 
   it("returns runtime system config snapshot", async () => {
-    const res = await request(app).get("/system/config");
+    const owner = await registerAndLogin({
+      username: "system-config-owner",
+      email: "system-config-owner@example.com",
+    });
+    const createNetworkRes = await request(app)
+      .post("/networks")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({ name: "System Config Network" });
+    expect(createNetworkRes.status).toBe(201);
+
+    const res = await request(app)
+      .get("/system/config")
+      .set("Authorization", `Bearer ${owner.accessToken}`);
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
       fileLockTtlSeconds: 120,
@@ -192,7 +204,9 @@ describe("SyncNest API integration", () => {
       `
     ).run({ oldIso, networkId });
 
-    const dryRunRes = await request(app).get("/system/config/cleanup-dry-run");
+    const dryRunRes = await request(app)
+      .get("/system/config/cleanup-dry-run")
+      .set("Authorization", `Bearer ${owner.accessToken}`);
     expect(dryRunRes.status).toBe(200);
     expect(dryRunRes.body.generatedAt).toBeTruthy();
     expect(dryRunRes.body.auditLogRetentionEnabled).toBe(true);
@@ -201,6 +215,35 @@ describe("SyncNest API integration", () => {
     expect(dryRunRes.body.candidates.expiredFileLocks).toBe(0);
     expect(dryRunRes.body.candidates.expiredAccessTokens).toBe(0);
     expect(dryRunRes.body.totals.allCandidates).toBe(1);
+  });
+
+  it("denies system endpoints for unauthorized and non-owner users", async () => {
+    const unauthorizedConfigRes = await request(app).get("/system/config");
+    expect(unauthorizedConfigRes.status).toBe(401);
+
+    const unauthorizedDryRunRes = await request(app).get("/system/config/cleanup-dry-run");
+    expect(unauthorizedDryRunRes.status).toBe(401);
+
+    const nonOwner = await registerAndLogin({
+      username: "system-non-owner",
+      email: "system-non-owner@example.com",
+    });
+
+    const forbiddenConfigRes = await request(app)
+      .get("/system/config")
+      .set("Authorization", `Bearer ${nonOwner.accessToken}`);
+    expect(forbiddenConfigRes.status).toBe(403);
+
+    const forbiddenDryRunRes = await request(app)
+      .get("/system/config/cleanup-dry-run")
+      .set("Authorization", `Bearer ${nonOwner.accessToken}`);
+    expect(forbiddenDryRunRes.status).toBe(403);
+
+    const forbiddenRunRes = await request(app)
+      .post("/system/config/cleanup/run")
+      .set("Authorization", `Bearer ${nonOwner.accessToken}`)
+      .send({});
+    expect(forbiddenRunRes.status).toBe(403);
   });
 
   it("runs manual cleanup endpoint, returns stats, and writes audit events", async () => {
