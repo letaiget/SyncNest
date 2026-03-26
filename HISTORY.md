@@ -122,7 +122,7 @@
 - `7a168aa` — `feat(server): add prometheus-style metrics endpoint and counters`
 - `1d92b6e` — `test(server): add integration tests for core API flows`
 - `7e73bdb` — `test(server): cover lock ownership conflicts and auth negatives`
-- `TBD` — lock TTL/cleanup integration tests commit (будет добавлен после фиксации).
+- `82a6b77` — `test(server): add lock TTL and cleanup integration coverage`
 - `7e11b50` — `test(server): add negative integration scenarios for auth and access`
 
 ### Планы
