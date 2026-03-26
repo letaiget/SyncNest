@@ -92,6 +92,10 @@
 - Добавлен интеграционный тест на рост labeled-метрик endpoint групп.
 - Добавлены helper-функции `metrics snapshot/reset` для изоляции in-memory метрик в тестах.
 - Обновлены metric-тесты на детерминированные проверки дельт (без накопительного эффекта между тестами).
+- Добавлена retention-очистка `audit_logs` в cleanup job:
+  - env `AUDIT_LOG_RETENTION_DAYS` (`0` = выключено, `>0` = удаление старых логов)
+  - метрика `syncnest_audit_logs_retention_deletions_total`
+- Добавлен интеграционный тест cleanup-удаления устаревших audit-логов.
 
 ### Решения
 
@@ -140,6 +144,7 @@
 - `839dc90` — `feat(metrics): add lock lifecycle counters and coverage`
 - `0dbf1e3` — `feat(metrics): add endpoint-group labeled counters`
 - `a174be5` — `test(metrics): isolate in-memory counters with snapshot reset`
+- `c20ce95` — `feat(server): add audit log retention cleanup policy`
 
 ### Планы
 
@@ -149,5 +154,5 @@
 - Добавить детализацию метрик по endpoint labels (low-cardinality).
 - Добавить low-cardinality labels для метрик endpoint групп (auth/storage/file-lock).
 - Добавить reset/isolated snapshot helper для in-memory metrics в тестах.
-- Добавить очистку/ротацию audit_logs по retention-политике (после согласования срока хранения).
+- Добавить endpoint/инструмент просмотра retention-конфига и dry-run cleanup статистики.
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).
