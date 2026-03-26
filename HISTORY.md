@@ -86,6 +86,10 @@
   - `syncnest_lock_heartbeat_renewed_total`
   - `syncnest_lock_heartbeat_rejected_total`
 - Добавлен интеграционный тест проверки lock-метрик через `GET /metrics`.
+- Добавлены low-cardinality метрики по группам endpoint:
+  - `syncnest_endpoint_requests_total{group="auth|storage|file_lock"}`
+  - `syncnest_endpoint_errors_total{group="auth|storage|file_lock"}`
+- Добавлен интеграционный тест на рост labeled-метрик endpoint групп.
 
 ### Решения
 
@@ -132,6 +136,7 @@
 - `7e11b50` — `test(server): add negative integration scenarios for auth and access`
 - `e03d226` — `test(server): add heartbeat lock renewal integration test`
 - `839dc90` — `feat(metrics): add lock lifecycle counters and coverage`
+- `0dbf1e3` — `feat(metrics): add endpoint-group labeled counters`
 
 ### Планы
 
@@ -140,4 +145,5 @@
 - Добавить постоянное (distributed) rate-limit хранилище для multi-instance деплоя.
 - Добавить детализацию метрик по endpoint labels (low-cardinality).
 - Добавить low-cardinality labels для метрик endpoint групп (auth/storage/file-lock).
+- Добавить reset/isolated snapshot helper для in-memory metrics в тестах.
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).
