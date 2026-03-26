@@ -80,6 +80,7 @@
 - Добавлены тесты жизненного цикла lock:
   - TTL-истечение lock при `status` запросе
   - автоосвобождение lock через `cleanup` pass
+  - heartbeat продлевает lock и не дает ему протухнуть
 
 ### Решения
 
@@ -124,6 +125,7 @@
 - `7e73bdb` — `test(server): cover lock ownership conflicts and auth negatives`
 - `82a6b77` — `test(server): add lock TTL and cleanup integration coverage`
 - `7e11b50` — `test(server): add negative integration scenarios for auth and access`
+- `e03d226` — `test(server): add heartbeat lock renewal integration test`
 
 ### Планы
 
@@ -131,5 +133,5 @@
 - Подключить реальную отправку email-кода подтверждения (вместо текущего dev-ответа).
 - Добавить постоянное (distributed) rate-limit хранилище для multi-instance деплоя.
 - Добавить детализацию метрик по endpoint labels (low-cardinality).
-- Добавить e2e-проверку heartbeat продления lock при серии запросов.
+- Добавить метрики file-lock TTL expirations/heartbeat outcomes.
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).
