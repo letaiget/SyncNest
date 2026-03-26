@@ -56,7 +56,7 @@
 - `b66ef39` — `docs: bootstrap SyncNest repository documentation`
 - `100590a` — `docs: update history with initial commit hash`
 - `0964fa3` — `feat(server): bootstrap TypeScript API and SQLite init`
-- `TBD` — auth module commit (будет добавлен после фиксации).
+- `00acb25` — `feat(server): add authentication module and session flow`
 
 ### Планы
 
