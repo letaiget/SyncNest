@@ -93,7 +93,7 @@
 - `13f7ff4` — `feat(auth): introduce refresh-token based session model`
 - `bdeebe7` — `feat(auth): add brute-force rate limiting for auth endpoints`
 - `7a173fe` — `feat(storage): add folders and files metadata APIs with trash`
-- `TBD` — file-lock API commit (будет добавлен после фиксации).
+- `d6f8753` — `feat(storage): add file lock API for edit ownership`
 
 ### Планы
 
