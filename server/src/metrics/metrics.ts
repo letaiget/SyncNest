@@ -4,6 +4,8 @@ type CounterKey =
   | "storage_requests_total"
   | "storage_errors_total"
   | "cleanup_runs_total"
+  | "cleanup_manual_runs_total"
+  | "cleanup_manual_errors_total"
   | "cleanup_changes_total"
   | "audit_logs_retention_deletions_total"
   | "lock_ttl_expirations_total"
@@ -19,6 +21,8 @@ const counters: Record<CounterKey, number> = {
   storage_requests_total: 0,
   storage_errors_total: 0,
   cleanup_runs_total: 0,
+  cleanup_manual_runs_total: 0,
+  cleanup_manual_errors_total: 0,
   cleanup_changes_total: 0,
   audit_logs_retention_deletions_total: 0,
   lock_ttl_expirations_total: 0,
@@ -91,6 +95,12 @@ export function getMetricsText(): string {
     "# HELP syncnest_cleanup_runs_total Total cleanup job runs",
     "# TYPE syncnest_cleanup_runs_total counter",
     `syncnest_cleanup_runs_total ${counters.cleanup_runs_total}`,
+    "# HELP syncnest_cleanup_manual_runs_total Total manual cleanup runs triggered by API",
+    "# TYPE syncnest_cleanup_manual_runs_total counter",
+    `syncnest_cleanup_manual_runs_total ${counters.cleanup_manual_runs_total}`,
+    "# HELP syncnest_cleanup_manual_errors_total Total manual cleanup trigger errors",
+    "# TYPE syncnest_cleanup_manual_errors_total counter",
+    `syncnest_cleanup_manual_errors_total ${counters.cleanup_manual_errors_total}`,
     "# HELP syncnest_cleanup_changes_total Total records changed by cleanup job",
     "# TYPE syncnest_cleanup_changes_total counter",
     `syncnest_cleanup_changes_total ${counters.cleanup_changes_total}`,

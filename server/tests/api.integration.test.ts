@@ -203,6 +203,70 @@ describe("SyncNest API integration", () => {
     expect(dryRunRes.body.totals.allCandidates).toBe(1);
   });
 
+  it("runs manual cleanup endpoint, returns stats, and writes audit events", async () => {
+    const before = getMetricsSnapshot();
+    const owner = await registerAndLogin({
+      username: "manual-cleanup-owner",
+      email: "manual-cleanup-owner@example.com",
+    });
+
+    const createNetworkRes = await request(app)
+      .post("/networks")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({ name: "Manual Cleanup Network" });
+    expect(createNetworkRes.status).toBe(201);
+    const networkId = createNetworkRes.body.networkId as string;
+
+    const connectRes = await request(app)
+      .post("/devices/connect")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({
+        networkId,
+        name: "ManualCleanupDevice",
+        computerName: "CleanupMac",
+        ipAddress: "192.168.1.101",
+        connectionType: "local",
+      });
+    expect(connectRes.status).toBe(201);
+
+    const oldIso = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+    db.prepare(
+      `
+      UPDATE audit_logs
+      SET created_at = @oldIso
+      WHERE id IN (
+        SELECT id FROM audit_logs
+        WHERE network_id = @networkId
+        ORDER BY created_at ASC
+        LIMIT 1
+      )
+      `
+    ).run({ oldIso, networkId });
+
+    const unauthorizedRes = await request(app).post("/system/config/cleanup/run").send({});
+    expect(unauthorizedRes.status).toBe(401);
+
+    const runRes = await request(app)
+      .post("/system/config/cleanup/run")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({});
+    expect(runRes.status).toBe(200);
+    expect(runRes.body.message).toBe("Cleanup pass executed");
+    expect(runRes.body.retainedAuditLogsDeleted).toBe(1);
+    expect(runRes.body.totalChanges).toBeGreaterThanOrEqual(1);
+
+    const manualAuditCount = (
+      db.prepare(
+        "SELECT COUNT(*) as count FROM audit_logs WHERE network_id = ? AND event_type = 'system.cleanup.manual.run'"
+      ).get(networkId) as { count: number }
+    ).count;
+    expect(manualAuditCount).toBe(1);
+
+    const after = getMetricsSnapshot();
+    expect(after.counters.cleanup_manual_runs_total - before.counters.cleanup_manual_runs_total).toBe(1);
+    expect(after.counters.cleanup_manual_errors_total - before.counters.cleanup_manual_errors_total).toBe(0);
+  });
+
   it("supports network + storage + file lock flow", async () => {
     const requestCodeRes = await request(app).post("/auth/register/request-code").send({
       username: "owner",

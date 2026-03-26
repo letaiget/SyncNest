@@ -7,6 +7,14 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
+export type CleanupPassStats = {
+  expiredCodes: number;
+  expiredLocks: number;
+  expiredAccessTokens: number;
+  retainedAuditLogsDeleted: number;
+  totalChanges: number;
+};
+
 function cleanupExpiredVerificationCodes(): number {
   const result = db
     .prepare(
@@ -74,15 +82,16 @@ function cleanupAuditLogsByRetention(): number {
   return result.changes;
 }
 
-export function runCleanupPassOnce(): void {
+export function runCleanupPassOnce(): CleanupPassStats {
   incCounter("cleanup_runs_total");
   const expiredCodes = cleanupExpiredVerificationCodes();
   const expiredLocks = cleanupExpiredFileLocks();
   const expiredAccessTokens = cleanupStaleAccessTokens();
   const retainedAuditLogsDeleted = cleanupAuditLogsByRetention();
+  const totalChanges = expiredCodes + expiredLocks + expiredAccessTokens + retainedAuditLogsDeleted;
   incCounter(
     "cleanup_changes_total",
-    expiredCodes + expiredLocks + expiredAccessTokens + retainedAuditLogsDeleted
+    totalChanges
   );
   incCounter("audit_logs_retention_deletions_total", retainedAuditLogsDeleted);
 
@@ -94,6 +103,14 @@ export function runCleanupPassOnce(): void {
       retainedAuditLogsDeleted,
     });
   }
+
+  return {
+    expiredCodes,
+    expiredLocks,
+    expiredAccessTokens,
+    retainedAuditLogsDeleted,
+    totalChanges,
+  };
 }
 
 export function startCleanupJob(): NodeJS.Timeout {

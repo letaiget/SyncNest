@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { env } from "../config/env.js";
 import { db } from "../db/sqlite.js";
+import { randomUUID } from "node:crypto";
+import { getAuthUser, requireAuth } from "../middleware/require-auth.js";
+import { runCleanupPassOnce } from "../jobs/cleanup.job.js";
+import { incCounter } from "../metrics/metrics.js";
 
 export const systemConfigRouter = Router();
 
@@ -88,4 +92,53 @@ systemConfigRouter.get("/cleanup-dry-run", (_req, res) => {
         expiredVerificationCodes + expiredFileLocks + expiredAccessTokens + auditLogsForDeletion,
     },
   });
+});
+
+systemConfigRouter.post("/cleanup/run", requireAuth, (req, res) => {
+  try {
+    const user = getAuthUser(req);
+    const stats = runCleanupPassOnce();
+    incCounter("cleanup_manual_runs_total");
+
+    const ownedNetworks = db
+      .prepare("SELECT id FROM networks WHERE owner_user_id = ?")
+      .all(user.id) as Array<{ id: string }>;
+
+    if (ownedNetworks.length > 0) {
+      const insertAuditLogStmt = db.prepare(`
+        INSERT INTO audit_logs (id, network_id, actor_user_id, event_type, payload_json, status, created_at)
+        VALUES (@id, @network_id, @actor_user_id, @event_type, @payload_json, @status, @created_at)
+      `);
+      const createdAt = new Date().toISOString();
+
+      const tx = db.transaction(() => {
+        for (const network of ownedNetworks) {
+          insertAuditLogStmt.run({
+            id: randomUUID(),
+            network_id: network.id,
+            actor_user_id: user.id,
+            event_type: "system.cleanup.manual.run",
+            payload_json: JSON.stringify({
+              expiredCodes: stats.expiredCodes,
+              expiredLocks: stats.expiredLocks,
+              expiredAccessTokens: stats.expiredAccessTokens,
+              retainedAuditLogsDeleted: stats.retainedAuditLogsDeleted,
+              totalChanges: stats.totalChanges,
+            }),
+            status: "success",
+            created_at: createdAt,
+          });
+        }
+      });
+      tx();
+    }
+
+    return res.status(200).json({
+      message: "Cleanup pass executed",
+      ...stats,
+    });
+  } catch (_error: unknown) {
+    incCounter("cleanup_manual_errors_total");
+    return res.status(500).json({ error: "Failed to execute cleanup pass" });
+  }
 });
