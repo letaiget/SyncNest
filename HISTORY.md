@@ -73,7 +73,7 @@
 - `ed1e65a` — `feat(server): add networks and devices APIs with audit events`
 - `29b8d67` — `chore(repo): untrack local design reference folder`
 - `24b3526` — `feat(server): add audit logs listing endpoint`
-- `TBD` — logout/logout-all endpoints commit (будет добавлен после фиксации).
+- `1464c6c` — `feat(auth): add logout and logout-all session revocation`
 
 ### Планы
 
