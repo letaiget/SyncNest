@@ -95,3 +95,4 @@
   - удаляет просроченные email verification codes
   - освобождает протухшие file-lock
   - ревокает истекшие access-токены
+- `GET /metrics` — экспорт базовых серверных метрик в Prometheus-совместимом text формате

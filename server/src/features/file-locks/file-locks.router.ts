@@ -1,6 +1,7 @@
 import { Response, Router } from "express";
 import { z } from "zod";
 import { getAuthUser, requireAuth } from "../../middleware/require-auth.js";
+import { incCounter } from "../../metrics/metrics.js";
 import {
   acquireFileLock,
   FileLockError,
@@ -31,6 +32,7 @@ const heartbeatBodySchema = z.object({
 });
 
 function respondWithError(res: Response, error: unknown) {
+  incCounter("storage_errors_total");
   if (error instanceof FileLockError) {
     return res.status(error.statusCode).json({ error: error.message });
   }
@@ -41,6 +43,7 @@ export const fileLocksRouter = Router();
 fileLocksRouter.use(requireAuth);
 
 fileLocksRouter.get("/status", (req, res) => {
+  incCounter("storage_requests_total");
   const parsed = statusQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid query", details: parsed.error.flatten() });
@@ -59,6 +62,7 @@ fileLocksRouter.get("/status", (req, res) => {
 });
 
 fileLocksRouter.post("/lock", (req, res) => {
+  incCounter("storage_requests_total");
   const parsed = lockBodySchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid request body", details: parsed.error.flatten() });
@@ -81,6 +85,7 @@ fileLocksRouter.post("/lock", (req, res) => {
 });
 
 fileLocksRouter.post("/unlock", (req, res) => {
+  incCounter("storage_requests_total");
   const parsed = unlockBodySchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid request body", details: parsed.error.flatten() });
@@ -102,6 +107,7 @@ fileLocksRouter.post("/unlock", (req, res) => {
 });
 
 fileLocksRouter.post("/heartbeat", (req, res) => {
+  incCounter("storage_requests_total");
   const parsed = heartbeatBodySchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid request body", details: parsed.error.flatten() });

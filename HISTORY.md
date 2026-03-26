@@ -64,6 +64,11 @@
   - очистка просроченных `email_verification_codes`
   - автоосвобождение протухших `file_locks`
   - ревокация истекших `access_tokens`
+- Добавлен endpoint `GET /metrics` с базовыми счетчиками:
+  - auth requests/errors
+  - storage+file-lock requests/errors
+  - cleanup runs/changes
+  - uptime
 
 ### Решения
 
@@ -103,11 +108,12 @@
 - `d6f8753` — `feat(storage): add file lock API for edit ownership`
 - `764feb0` — `feat(storage): add file-lock heartbeat and TTL expiration`
 - `710f17a` — `feat(server): add background cleanup job for stale records`
+- `TBD` — metrics endpoint + counters commit (будет добавлен после фиксации).
 
 ### Планы
 
 - Расширить API сервера модулями auth/devices/networks.
 - Подключить реальную отправку email-кода подтверждения (вместо текущего dev-ответа).
 - Добавить постоянное (distributed) rate-limit хранилище для multi-instance деплоя.
-- Добавить метрики (prometheus-style) по cleanup job и auth/storage операциям.
+- Добавить детализацию метрик по endpoint labels (low-cardinality).
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).

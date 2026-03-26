@@ -9,6 +9,7 @@ import { fileLocksRouter } from "./features/file-locks/file-locks.router.js";
 import { networksRouter } from "./features/networks/networks.router.js";
 import { storageRouter } from "./features/storage/storage.router.js";
 import { healthRouter } from "./routes/health.js";
+import { metricsRouter } from "./routes/metrics.js";
 
 export function createApp() {
   const app = express();
@@ -27,6 +28,7 @@ export function createApp() {
   });
 
   app.use("/health", healthRouter);
+  app.use("/metrics", metricsRouter);
   app.use("/auth", authRouter);
   app.use("/networks", networksRouter);
   app.use("/devices", devicesRouter);

@@ -12,6 +12,7 @@ import {
 } from "./auth.service.js";
 import { getAuthUser, requireAuth } from "../../middleware/require-auth.js";
 import { createRateLimiter } from "../../middleware/rate-limit.js";
+import { incCounter } from "../../metrics/metrics.js";
 
 const requestCodeSchema = z.object({
   username: z.string().min(3).max(32),
@@ -65,6 +66,7 @@ const refreshLimiter = createRateLimiter({
 });
 
 authRouter.post("/register/request-code", requestCodeLimiter, (req, res) => {
+  incCounter("auth_requests_total");
   const parsed = requestCodeSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({
@@ -81,6 +83,7 @@ authRouter.post("/register/request-code", requestCodeLimiter, (req, res) => {
       verificationCode: result.verificationCode,
     });
   } catch (error: unknown) {
+    incCounter("auth_errors_total");
     if (error instanceof AuthError) {
       return res.status(error.statusCode).json({ error: error.message });
     }
@@ -89,6 +92,7 @@ authRouter.post("/register/request-code", requestCodeLimiter, (req, res) => {
 });
 
 authRouter.post("/register/confirm", (req, res) => {
+  incCounter("auth_requests_total");
   const parsed = confirmSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({
@@ -104,6 +108,7 @@ authRouter.post("/register/confirm", (req, res) => {
       user,
     });
   } catch (error: unknown) {
+    incCounter("auth_errors_total");
     if (error instanceof AuthError) {
       return res.status(error.statusCode).json({ error: error.message });
     }
@@ -112,6 +117,7 @@ authRouter.post("/register/confirm", (req, res) => {
 });
 
 authRouter.post("/login", loginLimiter, (req, res) => {
+  incCounter("auth_requests_total");
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({
@@ -124,6 +130,7 @@ authRouter.post("/login", loginLimiter, (req, res) => {
     const session = login(parsed.data);
     return res.status(200).json(session);
   } catch (error: unknown) {
+    incCounter("auth_errors_total");
     if (error instanceof AuthError) {
       return res.status(error.statusCode).json({ error: error.message });
     }
@@ -132,6 +139,7 @@ authRouter.post("/login", loginLimiter, (req, res) => {
 });
 
 authRouter.post("/refresh", refreshLimiter, (req, res) => {
+  incCounter("auth_requests_total");
   const parsed = refreshSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({
@@ -144,6 +152,7 @@ authRouter.post("/refresh", refreshLimiter, (req, res) => {
     const refreshed = refreshAccessToken(parsed.data);
     return res.status(200).json(refreshed);
   } catch (error: unknown) {
+    incCounter("auth_errors_total");
     if (error instanceof AuthError) {
       return res.status(error.statusCode).json({ error: error.message });
     }
@@ -152,6 +161,7 @@ authRouter.post("/refresh", refreshLimiter, (req, res) => {
 });
 
 authRouter.get("/me", (req, res) => {
+  incCounter("auth_requests_total");
   const token = getBearerToken(req.headers.authorization);
   if (!token) {
     return res.status(401).json({ error: "Missing or invalid Authorization header" });
@@ -161,6 +171,7 @@ authRouter.get("/me", (req, res) => {
     const user = getCurrentUserFromToken(token);
     return res.status(200).json({ user });
   } catch (error: unknown) {
+    incCounter("auth_errors_total");
     if (error instanceof AuthError) {
       return res.status(error.statusCode).json({ error: error.message });
     }
@@ -169,6 +180,7 @@ authRouter.get("/me", (req, res) => {
 });
 
 authRouter.post("/logout", (req, res) => {
+  incCounter("auth_requests_total");
   const token = getBearerToken(req.headers.authorization);
   if (!token) {
     return res.status(401).json({ error: "Missing or invalid Authorization header" });
@@ -178,6 +190,7 @@ authRouter.post("/logout", (req, res) => {
     logoutByAccessToken(token);
     return res.status(200).json({ message: "Logged out" });
   } catch (error: unknown) {
+    incCounter("auth_errors_total");
     if (error instanceof AuthError) {
       return res.status(error.statusCode).json({ error: error.message });
     }
@@ -186,6 +199,7 @@ authRouter.post("/logout", (req, res) => {
 });
 
 authRouter.post("/logout-all", requireAuth, (req, res) => {
+  incCounter("auth_requests_total");
   try {
     const result = logoutAllByUser(getAuthUser(req).id);
     return res.status(200).json({
@@ -193,6 +207,7 @@ authRouter.post("/logout-all", requireAuth, (req, res) => {
       revokedSessions: result.revokedSessions,
     });
   } catch (error: unknown) {
+    incCounter("auth_errors_total");
     if (error instanceof AuthError) {
       return res.status(error.statusCode).json({ error: error.message });
     }

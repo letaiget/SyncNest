@@ -1,6 +1,7 @@
 import { Response, Router } from "express";
 import { z } from "zod";
 import { getAuthUser, requireAuth } from "../../middleware/require-auth.js";
+import { incCounter } from "../../metrics/metrics.js";
 import {
   createFile,
   createFolder,
@@ -65,6 +66,7 @@ export const storageRouter = Router();
 storageRouter.use(requireAuth);
 
 function respondWithError(res: Response, error: unknown) {
+  incCounter("storage_errors_total");
   if (error instanceof StorageError) {
     return res.status(error.statusCode).json({ error: error.message });
   }
@@ -72,6 +74,7 @@ function respondWithError(res: Response, error: unknown) {
 }
 
 storageRouter.get("/folders", (req, res) => {
+  incCounter("storage_requests_total");
   const parsed = listFoldersQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid query", details: parsed.error.flatten() });
@@ -89,6 +92,7 @@ storageRouter.get("/folders", (req, res) => {
 });
 
 storageRouter.post("/folders", (req, res) => {
+  incCounter("storage_requests_total");
   const parsed = createFolderSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid request body", details: parsed.error.flatten() });
@@ -107,6 +111,7 @@ storageRouter.post("/folders", (req, res) => {
 });
 
 storageRouter.patch("/folders/:folderId", (req, res) => {
+  incCounter("storage_requests_total");
   const body = updateFolderSchema.safeParse(req.body);
   const params = z.object({ folderId: z.string().uuid() }).safeParse(req.params);
   if (!body.success || !params.success) {
@@ -127,6 +132,7 @@ storageRouter.patch("/folders/:folderId", (req, res) => {
 });
 
 storageRouter.delete("/folders/:folderId", (req, res) => {
+  incCounter("storage_requests_total");
   const body = networkOnlySchema.safeParse(req.body);
   const params = z.object({ folderId: z.string().uuid() }).safeParse(req.params);
   if (!body.success || !params.success) {
@@ -145,6 +151,7 @@ storageRouter.delete("/folders/:folderId", (req, res) => {
 });
 
 storageRouter.post("/folders/:folderId/restore", (req, res) => {
+  incCounter("storage_requests_total");
   const body = networkOnlySchema.safeParse(req.body);
   const params = z.object({ folderId: z.string().uuid() }).safeParse(req.params);
   if (!body.success || !params.success) {
@@ -163,6 +170,7 @@ storageRouter.post("/folders/:folderId/restore", (req, res) => {
 });
 
 storageRouter.get("/files", (req, res) => {
+  incCounter("storage_requests_total");
   const parsed = listFilesQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid query", details: parsed.error.flatten() });
@@ -180,6 +188,7 @@ storageRouter.get("/files", (req, res) => {
 });
 
 storageRouter.post("/files", (req, res) => {
+  incCounter("storage_requests_total");
   const parsed = createFileSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid request body", details: parsed.error.flatten() });
@@ -200,6 +209,7 @@ storageRouter.post("/files", (req, res) => {
 });
 
 storageRouter.patch("/files/:fileId", (req, res) => {
+  incCounter("storage_requests_total");
   const body = updateFileSchema.safeParse(req.body);
   const params = z.object({ fileId: z.string().uuid() }).safeParse(req.params);
   if (!body.success || !params.success) {
@@ -220,6 +230,7 @@ storageRouter.patch("/files/:fileId", (req, res) => {
 });
 
 storageRouter.delete("/files/:fileId", (req, res) => {
+  incCounter("storage_requests_total");
   const body = networkOnlySchema.safeParse(req.body);
   const params = z.object({ fileId: z.string().uuid() }).safeParse(req.params);
   if (!body.success || !params.success) {
@@ -238,6 +249,7 @@ storageRouter.delete("/files/:fileId", (req, res) => {
 });
 
 storageRouter.post("/files/:fileId/restore", (req, res) => {
+  incCounter("storage_requests_total");
   const body = networkOnlySchema.safeParse(req.body);
   const params = z.object({ fileId: z.string().uuid() }).safeParse(req.params);
   if (!body.success || !params.success) {
@@ -256,6 +268,7 @@ storageRouter.post("/files/:fileId/restore", (req, res) => {
 });
 
 storageRouter.get("/trash", (req, res) => {
+  incCounter("storage_requests_total");
   const parsed = trashQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid query", details: parsed.error.flatten() });

@@ -1,6 +1,7 @@
 import { db } from "../db/sqlite.js";
 import { env } from "../config/env.js";
 import { logger } from "../config/logger.js";
+import { incCounter } from "../metrics/metrics.js";
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -56,9 +57,11 @@ function cleanupStaleAccessTokens(): number {
 }
 
 function runCleanupPass(): void {
+  incCounter("cleanup_runs_total");
   const expiredCodes = cleanupExpiredVerificationCodes();
   const expiredLocks = cleanupExpiredFileLocks();
   const expiredAccessTokens = cleanupStaleAccessTokens();
+  incCounter("cleanup_changes_total", expiredCodes + expiredLocks + expiredAccessTokens);
 
   if (expiredCodes > 0 || expiredLocks > 0 || expiredAccessTokens > 0) {
     logger.info("Cleanup job applied changes", {

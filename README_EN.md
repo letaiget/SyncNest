@@ -95,3 +95,4 @@ Initial version: `v0.1.0`
   - removes expired email verification codes
   - releases stale file locks
   - revokes expired access tokens
+- `GET /metrics` — export baseline server metrics in Prometheus-compatible text format
