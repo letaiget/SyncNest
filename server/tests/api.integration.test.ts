@@ -360,4 +360,42 @@ describe("SyncNest API integration", () => {
     expect(statusRes.status).toBe(200);
     expect(statusRes.body.locked).toBe(false);
   });
+
+  it("keeps lock active when owner sends heartbeat", async () => {
+    const owner = await registerAndLogin({
+      username: "heartbeat-owner",
+      email: "heartbeat-owner@example.com",
+    });
+    const { networkId, fileId } = await prepareNetworkFolderFile(owner.accessToken);
+
+    const lockRes = await request(app)
+      .post("/file-locks/lock")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({ networkId, fileId });
+    expect(lockRes.status).toBe(200);
+
+    const nearExpiryIso = new Date(Date.now() - 60 * 1000).toISOString();
+    db.prepare("UPDATE file_locks SET acquired_at = ? WHERE file_id = ?").run(nearExpiryIso, fileId);
+
+    const heartbeatRes = await request(app)
+      .post("/file-locks/heartbeat")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({ networkId, fileId });
+    expect(heartbeatRes.status).toBe(200);
+    expect(heartbeatRes.body.renewed).toBe(true);
+
+    const lockRow = db
+      .prepare("SELECT acquired_at, released_at FROM file_locks WHERE file_id = ? LIMIT 1")
+      .get(fileId) as { acquired_at: string; released_at: string | null } | undefined;
+    expect(lockRow).toBeTruthy();
+    expect(lockRow?.released_at).toBeNull();
+    expect(new Date(lockRow!.acquired_at).getTime()).toBeGreaterThan(new Date(nearExpiryIso).getTime());
+
+    const statusRes = await request(app)
+      .get("/file-locks/status")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .query({ networkId, fileId });
+    expect(statusRes.status).toBe(200);
+    expect(statusRes.body.locked).toBe(true);
+  });
 });
