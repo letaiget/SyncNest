@@ -81,6 +81,11 @@
   - TTL-истечение lock при `status` запросе
   - автоосвобождение lock через `cleanup` pass
   - heartbeat продлевает lock и не дает ему протухнуть
+- Добавлены метрики жизненного цикла lock:
+  - `syncnest_lock_ttl_expirations_total`
+  - `syncnest_lock_heartbeat_renewed_total`
+  - `syncnest_lock_heartbeat_rejected_total`
+- Добавлен интеграционный тест проверки lock-метрик через `GET /metrics`.
 
 ### Решения
 
@@ -126,6 +131,7 @@
 - `82a6b77` — `test(server): add lock TTL and cleanup integration coverage`
 - `7e11b50` — `test(server): add negative integration scenarios for auth and access`
 - `e03d226` — `test(server): add heartbeat lock renewal integration test`
+- `839dc90` — `feat(metrics): add lock lifecycle counters and coverage`
 
 ### Планы
 
@@ -133,5 +139,5 @@
 - Подключить реальную отправку email-кода подтверждения (вместо текущего dev-ответа).
 - Добавить постоянное (distributed) rate-limit хранилище для multi-instance деплоя.
 - Добавить детализацию метрик по endpoint labels (low-cardinality).
-- Добавить метрики file-lock TTL expirations/heartbeat outcomes.
+- Добавить low-cardinality labels для метрик endpoint групп (auth/storage/file-lock).
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).
