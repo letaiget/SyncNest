@@ -118,7 +118,7 @@
 - `710f17a` — `feat(server): add background cleanup job for stale records`
 - `7a168aa` — `feat(server): add prometheus-style metrics endpoint and counters`
 - `1d92b6e` — `test(server): add integration tests for core API flows`
-- `TBD` — negative lock/auth integration tests commit (будет добавлен после фиксации).
+- `7e73bdb` — `test(server): cover lock ownership conflicts and auth negatives`
 - `7e11b50` — `test(server): add negative integration scenarios for auth and access`
 
 ### Планы
