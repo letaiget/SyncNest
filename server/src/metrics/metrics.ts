@@ -9,6 +9,8 @@ type CounterKey =
   | "lock_heartbeat_renewed_total"
   | "lock_heartbeat_rejected_total";
 
+type EndpointGroup = "auth" | "storage" | "file_lock";
+
 const counters: Record<CounterKey, number> = {
   auth_requests_total: 0,
   auth_errors_total: 0,
@@ -22,9 +24,19 @@ const counters: Record<CounterKey, number> = {
 };
 
 const startedAtMs = Date.now();
+const endpointGroups: EndpointGroup[] = ["auth", "storage", "file_lock"];
+const endpointCounters: Record<EndpointGroup, { requests: number; errors: number }> = {
+  auth: { requests: 0, errors: 0 },
+  storage: { requests: 0, errors: 0 },
+  file_lock: { requests: 0, errors: 0 },
+};
 
 export function incCounter(key: CounterKey, value = 1): void {
   counters[key] += value;
+}
+
+export function incEndpointCounter(group: EndpointGroup, kind: "requests" | "errors", value = 1): void {
+  endpointCounters[group][kind] += value;
 }
 
 export function getMetricsText(): string {
@@ -61,6 +73,16 @@ export function getMetricsText(): string {
     "# HELP syncnest_lock_heartbeat_rejected_total Total rejected file lock heartbeat attempts",
     "# TYPE syncnest_lock_heartbeat_rejected_total counter",
     `syncnest_lock_heartbeat_rejected_total ${counters.lock_heartbeat_rejected_total}`,
+    "# HELP syncnest_endpoint_requests_total Total endpoint requests by group",
+    "# TYPE syncnest_endpoint_requests_total counter",
+    ...endpointGroups.map(
+      (group) => `syncnest_endpoint_requests_total{group="${group}"} ${endpointCounters[group].requests}`
+    ),
+    "# HELP syncnest_endpoint_errors_total Total endpoint errors by group",
+    "# TYPE syncnest_endpoint_errors_total counter",
+    ...endpointGroups.map(
+      (group) => `syncnest_endpoint_errors_total{group="${group}"} ${endpointCounters[group].errors}`
+    ),
     "",
   ].join("\n");
 }

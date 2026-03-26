@@ -102,6 +102,22 @@ function extractMetricValue(metricsText: string, metricName: string): number {
   return Number.parseFloat(rawValue);
 }
 
+function extractLabeledMetricValue(
+  metricsText: string,
+  metricName: string,
+  labelName: string,
+  labelValue: string
+): number {
+  const prefix = `${metricName}{${labelName}="${labelValue}"} `;
+  const line = metricsText.split("\n").find((entry) => entry.startsWith(prefix));
+  if (!line) {
+    throw new Error(`Metric not found: ${prefix}`);
+  }
+
+  const rawValue = line.slice(prefix.length);
+  return Number.parseFloat(rawValue);
+}
+
 async function getLockMetrics(): Promise<LockMetrics> {
   const metricsRes = await request(app).get("/metrics");
   expect(metricsRes.status).toBe(200);
@@ -484,5 +500,92 @@ describe("SyncNest API integration", () => {
     expect(after.ttlExpirations).toBeGreaterThanOrEqual(before.ttlExpirations + 1);
     expect(after.heartbeatRenewed).toBeGreaterThanOrEqual(before.heartbeatRenewed + 1);
     expect(after.heartbeatRejected).toBeGreaterThanOrEqual(before.heartbeatRejected + 1);
+  });
+
+  it("exports low-cardinality endpoint group metrics", async () => {
+    const beforeMetricsRes = await request(app).get("/metrics");
+    expect(beforeMetricsRes.status).toBe(200);
+    const beforeMetrics = beforeMetricsRes.text as string;
+    const beforeAuthReq = extractLabeledMetricValue(
+      beforeMetrics,
+      "syncnest_endpoint_requests_total",
+      "group",
+      "auth"
+    );
+    const beforeStorageReq = extractLabeledMetricValue(
+      beforeMetrics,
+      "syncnest_endpoint_requests_total",
+      "group",
+      "storage"
+    );
+    const beforeFileLockReq = extractLabeledMetricValue(
+      beforeMetrics,
+      "syncnest_endpoint_requests_total",
+      "group",
+      "file_lock"
+    );
+    const beforeAuthErr = extractLabeledMetricValue(
+      beforeMetrics,
+      "syncnest_endpoint_errors_total",
+      "group",
+      "auth"
+    );
+
+    const badLoginRes = await request(app).post("/auth/login").send({
+      username: "missing-user",
+      password: DEFAULT_PASSWORD,
+    });
+    expect(badLoginRes.status).toBe(401);
+
+    const owner = await registerAndLogin({
+      username: "labels-owner",
+      email: "labels-owner@example.com",
+    });
+    const { networkId, fileId } = await prepareNetworkFolderFile(owner.accessToken);
+
+    const storageReqRes = await request(app)
+      .get("/storage/files")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .query({ networkId });
+    expect(storageReqRes.status).toBe(200);
+
+    const fileLockReqRes = await request(app)
+      .get("/file-locks/status")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .query({ networkId, fileId });
+    expect(fileLockReqRes.status).toBe(200);
+
+    const afterMetricsRes = await request(app).get("/metrics");
+    expect(afterMetricsRes.status).toBe(200);
+    const afterMetrics = afterMetricsRes.text as string;
+    const afterAuthReq = extractLabeledMetricValue(
+      afterMetrics,
+      "syncnest_endpoint_requests_total",
+      "group",
+      "auth"
+    );
+    const afterStorageReq = extractLabeledMetricValue(
+      afterMetrics,
+      "syncnest_endpoint_requests_total",
+      "group",
+      "storage"
+    );
+    const afterFileLockReq = extractLabeledMetricValue(
+      afterMetrics,
+      "syncnest_endpoint_requests_total",
+      "group",
+      "file_lock"
+    );
+    const afterAuthErr = extractLabeledMetricValue(
+      afterMetrics,
+      "syncnest_endpoint_errors_total",
+      "group",
+      "auth"
+    );
+
+    expect(afterAuthReq).toBeGreaterThanOrEqual(beforeAuthReq + 1);
+    expect(afterStorageReq).toBeGreaterThanOrEqual(beforeStorageReq + 1);
+    expect(afterFileLockReq).toBeGreaterThanOrEqual(beforeFileLockReq + 1);
+    expect(afterAuthErr).toBeGreaterThanOrEqual(beforeAuthErr + 1);
   });
 });
