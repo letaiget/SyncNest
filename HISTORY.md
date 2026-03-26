@@ -36,6 +36,7 @@
   - `network.created`;
   - `device.connected`;
   - `device.disconnected`.
+- Папка `MacOS App Design/` удалена из отслеживания git и добавлена в `.gitignore` (локальный референс).
 
 ### Решения
 

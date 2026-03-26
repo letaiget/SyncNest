@@ -64,7 +64,6 @@ Initial version: `v0.1.0`
 
 ## Current code layout
 
-- `MacOS App Design/` — reference UI prototype (Vite + React)
 - `server/` — central server bootstrap (`Node.js + TypeScript + SQLite`)
 
 ### Implemented server endpoints

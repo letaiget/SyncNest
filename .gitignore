@@ -25,3 +25,6 @@ pnpm-debug.log*
 # Local secret helper files
 ключ
 Потом удалить
+
+# Local-only design sources
+MacOS App Design/

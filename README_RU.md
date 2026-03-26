@@ -64,7 +64,6 @@
 
 ## Текущая структура кода
 
-- `MacOS App Design/` — референсный UI-макет (Vite + React)
 - `server/` — каркас центрального сервера (`Node.js + TypeScript + SQLite`)
 
 ### Что уже есть в сервере
