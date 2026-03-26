@@ -118,6 +118,9 @@
   - `GET /system/config`, `GET /system/config/cleanup-dry-run`, `POST /system/config/cleanup/run`
     доступны только авторизованным пользователям, владеющим хотя бы одной сетью
   - добавлены интеграционные проверки на `401` и `403` для system endpoints.
+- Добавлен централизованный RBAC middleware `requireSystemOwnerScope`:
+  - проверка owner-scope вынесена из роутера в переиспользуемый слой middleware
+  - `system-config` router переведен на middleware-based access policy.
 
 ### Решения
 
@@ -171,6 +174,7 @@
 - `d5106a7` — `feat(server): add cleanup dry-run system endpoint`
 - `f07f4b1` — `feat(server): add manual cleanup trigger endpoint`
 - `89a6864` — `feat(server): enforce owner-scope access for system endpoints`
+- `b1fade6` — `refactor(auth): introduce reusable system scope middleware`
 
 ### Планы
 
@@ -184,4 +188,5 @@
 - Добавить ручной trigger endpoint для cleanup pass (admin-only, с audit event).
 - Добавить роль/политику доступа для system endpoints (owner/admin scope).
 - Добавить централизованный RBAC middleware для ролей (`owner`, `admin`) с переиспользованием в роутерах.
+- Расширить RBAC: добавить `admin`-роль и role map на уровне пользователя/сети.
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).
