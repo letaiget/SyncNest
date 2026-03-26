@@ -77,6 +77,9 @@
   - forbidden cross-user access (`403`)
   - invalid refresh token (`401`)
   - lock conflict/ownership cases
+- Добавлены тесты жизненного цикла lock:
+  - TTL-истечение lock при `status` запросе
+  - автоосвобождение lock через `cleanup` pass
 
 ### Решения
 
@@ -119,6 +122,7 @@
 - `7a168aa` — `feat(server): add prometheus-style metrics endpoint and counters`
 - `1d92b6e` — `test(server): add integration tests for core API flows`
 - `7e73bdb` — `test(server): cover lock ownership conflicts and auth negatives`
+- `TBD` — lock TTL/cleanup integration tests commit (будет добавлен после фиксации).
 - `7e11b50` — `test(server): add negative integration scenarios for auth and access`
 
 ### Планы
@@ -127,5 +131,5 @@
 - Подключить реальную отправку email-кода подтверждения (вместо текущего dev-ответа).
 - Добавить постоянное (distributed) rate-limit хранилище для multi-instance деплоя.
 - Добавить детализацию метрик по endpoint labels (low-cardinality).
-- Добавить тесты TTL истечения lock и cleanup pass эффекта.
+- Добавить e2e-проверку heartbeat продления lock при серии запросов.
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).

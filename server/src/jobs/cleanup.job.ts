@@ -56,7 +56,7 @@ function cleanupStaleAccessTokens(): number {
   return result.changes;
 }
 
-function runCleanupPass(): void {
+export function runCleanupPassOnce(): void {
   incCounter("cleanup_runs_total");
   const expiredCodes = cleanupExpiredVerificationCodes();
   const expiredLocks = cleanupExpiredFileLocks();
@@ -73,7 +73,7 @@ function runCleanupPass(): void {
 }
 
 export function startCleanupJob(): NodeJS.Timeout {
-  runCleanupPass();
+  runCleanupPassOnce();
 
   const intervalMs = env.CLEANUP_INTERVAL_SECONDS * 1000;
   logger.info("Cleanup job started", {
@@ -82,6 +82,6 @@ export function startCleanupJob(): NodeJS.Timeout {
   });
 
   return setInterval(() => {
-    runCleanupPass();
+    runCleanupPassOnce();
   }, intervalMs);
 }

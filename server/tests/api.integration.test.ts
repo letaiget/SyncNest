@@ -3,6 +3,7 @@ import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/app.js";
 import { initializeDatabase, db } from "../src/db/sqlite.js";
 import { resetRateLimitBuckets } from "../src/middleware/rate-limit.js";
+import { runCleanupPassOnce } from "../src/jobs/cleanup.job.js";
 
 const app = createApp();
 const DEFAULT_PASSWORD = "StrongPass123";
@@ -308,5 +309,55 @@ describe("SyncNest API integration", () => {
       .set("Authorization", `Bearer ${intruder.accessToken}`)
       .send({ networkId, fileId });
     expect(intruderHeartbeatRes.status).toBe(403);
+  });
+
+  it("auto-expires stale lock on status check by TTL", async () => {
+    const owner = await registerAndLogin({
+      username: "ttl-owner",
+      email: "ttl-owner@example.com",
+    });
+    const { networkId, fileId } = await prepareNetworkFolderFile(owner.accessToken);
+
+    const lockRes = await request(app)
+      .post("/file-locks/lock")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({ networkId, fileId });
+    expect(lockRes.status).toBe(200);
+
+    const staleIso = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    db.prepare("UPDATE file_locks SET acquired_at = ? WHERE file_id = ?").run(staleIso, fileId);
+
+    const statusRes = await request(app)
+      .get("/file-locks/status")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .query({ networkId, fileId });
+    expect(statusRes.status).toBe(200);
+    expect(statusRes.body.locked).toBe(false);
+  });
+
+  it("cleanup pass releases stale locks", async () => {
+    const owner = await registerAndLogin({
+      username: "cleanup-owner",
+      email: "cleanup-owner@example.com",
+    });
+    const { networkId, fileId } = await prepareNetworkFolderFile(owner.accessToken);
+
+    const lockRes = await request(app)
+      .post("/file-locks/lock")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({ networkId, fileId });
+    expect(lockRes.status).toBe(200);
+
+    const staleIso = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    db.prepare("UPDATE file_locks SET acquired_at = ? WHERE file_id = ?").run(staleIso, fileId);
+
+    runCleanupPassOnce();
+
+    const statusRes = await request(app)
+      .get("/file-locks/status")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .query({ networkId, fileId });
+    expect(statusRes.status).toBe(200);
+    expect(statusRes.body.locked).toBe(false);
   });
 });
