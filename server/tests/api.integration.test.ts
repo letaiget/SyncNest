@@ -4,6 +4,7 @@ import { createApp } from "../src/app.js";
 import { initializeDatabase, db } from "../src/db/sqlite.js";
 
 const app = createApp();
+const DEFAULT_PASSWORD = "StrongPass123";
 
 function resetDatabase(): void {
   db.exec(`
@@ -18,6 +19,32 @@ function resetDatabase(): void {
     DELETE FROM networks;
     DELETE FROM users;
   `);
+}
+
+async function registerAndLogin(params: { username: string; email: string }) {
+  const requestCodeRes = await request(app).post("/auth/register/request-code").send({
+    username: params.username,
+    email: params.email,
+    password: DEFAULT_PASSWORD,
+  });
+  expect(requestCodeRes.status).toBe(201);
+
+  const confirmRes = await request(app).post("/auth/register/confirm").send({
+    email: params.email,
+    code: requestCodeRes.body.verificationCode,
+  });
+  expect(confirmRes.status).toBe(201);
+
+  const loginRes = await request(app).post("/auth/login").send({
+    username: params.username,
+    password: DEFAULT_PASSWORD,
+  });
+  expect(loginRes.status).toBe(200);
+
+  return {
+    accessToken: loginRes.body.accessToken as string,
+    refreshToken: loginRes.body.refreshToken as string,
+  };
 }
 
 describe("SyncNest API integration", () => {
@@ -136,5 +163,57 @@ describe("SyncNest API integration", () => {
       });
     expect(unlockRes.status).toBe(200);
     expect(unlockRes.body.released).toBe(true);
+  });
+
+  it("rejects unauthorized access to protected routes", async () => {
+    const res = await request(app).get("/networks");
+    expect(res.status).toBe(401);
+  });
+
+  it("rejects cross-user access to another user's network", async () => {
+    const owner = await registerAndLogin({
+      username: "owner2",
+      email: "owner2@example.com",
+    });
+    const intruder = await registerAndLogin({
+      username: "intruder",
+      email: "intruder@example.com",
+    });
+
+    const createNetworkRes = await request(app)
+      .post("/networks")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({ name: "Private Network" });
+    expect(createNetworkRes.status).toBe(201);
+    const networkId = createNetworkRes.body.networkId as string;
+
+    const forbiddenRes = await request(app)
+      .get("/devices")
+      .set("Authorization", `Bearer ${intruder.accessToken}`)
+      .query({ networkId });
+    expect(forbiddenRes.status).toBe(403);
+  });
+
+  it("invalidates old access token after logout and refresh rejects bad token", async () => {
+    const session = await registerAndLogin({
+      username: "logout-user",
+      email: "logout-user@example.com",
+    });
+
+    const badRefreshRes = await request(app).post("/auth/refresh").send({
+      refreshToken: "a".repeat(64),
+    });
+    expect(badRefreshRes.status).toBe(401);
+
+    const logoutRes = await request(app)
+      .post("/auth/logout")
+      .set("Authorization", `Bearer ${session.accessToken}`)
+      .send();
+    expect(logoutRes.status).toBe(200);
+
+    const meRes = await request(app)
+      .get("/auth/me")
+      .set("Authorization", `Bearer ${session.accessToken}`);
+    expect(meRes.status).toBe(401);
   });
 });
