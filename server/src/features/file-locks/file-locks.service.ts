@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { db } from "../../db/sqlite.js";
+import { env } from "../../config/env.js";
 
 type FileRow = {
   id: string;
@@ -30,6 +31,12 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
+function isLockExpired(acquiredAt: string): boolean {
+  const acquiredMs = new Date(acquiredAt).getTime();
+  const ttlMs = env.FILE_LOCK_TTL_SECONDS * 1000;
+  return Date.now() - acquiredMs > ttlMs;
+}
+
 const getNetworkOwnerStmt = db.prepare("SELECT owner_user_id FROM networks WHERE id = ? LIMIT 1");
 const findFileByIdStmt = db.prepare("SELECT id, network_id, deleted_at FROM files WHERE id = ? LIMIT 1");
 const findFileLockByFileIdStmt = db.prepare("SELECT * FROM file_locks WHERE file_id = ? LIMIT 1");
@@ -47,6 +54,11 @@ const updateFileLockAcquireStmt = db.prepare(`
       acquired_at = @acquired_at,
       released_at = NULL
   WHERE id = @id
+`);
+const updateFileLockHeartbeatStmt = db.prepare(`
+  UPDATE file_locks
+  SET acquired_at = @acquired_at
+  WHERE id = @id AND released_at IS NULL
 `);
 const updateFileLockReleaseStmt = db.prepare(`
   UPDATE file_locks
@@ -94,6 +106,39 @@ function writeAuditLog(input: {
   });
 }
 
+function resolveActiveLockForFile(input: {
+  fileId: string;
+  networkId: string;
+  actorUserId: string;
+}): FileLockRow | null {
+  const lock = findFileLockByFileIdStmt.get(input.fileId) as FileLockRow | undefined;
+  if (!lock || lock.released_at) {
+    return null;
+  }
+
+  if (isLockExpired(lock.acquired_at)) {
+    const releasedAt = nowIso();
+    updateFileLockReleaseStmt.run({
+      id: lock.id,
+      released_at: releasedAt,
+    });
+    writeAuditLog({
+      networkId: input.networkId,
+      actorUserId: input.actorUserId,
+      eventType: "file.lock.expired",
+      payload: {
+        fileId: input.fileId,
+        previousLockOwnerUserId: lock.lock_owner_user_id,
+        previousLockOwnerDeviceId: lock.lock_owner_device_id,
+      },
+      status: "success",
+    });
+    return null;
+  }
+
+  return lock;
+}
+
 export function getFileLockStatus(input: {
   networkId: string;
   userId: string;
@@ -110,8 +155,12 @@ export function getFileLockStatus(input: {
   assertNetworkAccess(input.networkId, input.userId);
   assertFileInNetwork(input.networkId, input.fileId);
 
-  const lock = findFileLockByFileIdStmt.get(input.fileId) as FileLockRow | undefined;
-  if (!lock || lock.released_at) {
+  const lock = resolveActiveLockForFile({
+    fileId: input.fileId,
+    networkId: input.networkId,
+    actorUserId: input.userId,
+  });
+  if (!lock) {
     return { locked: false, lock: null };
   }
 
@@ -136,6 +185,11 @@ export function acquireFileLock(input: {
   assertFileInNetwork(input.networkId, input.fileId);
 
   const existing = findFileLockByFileIdStmt.get(input.fileId) as FileLockRow | undefined;
+  const active = resolveActiveLockForFile({
+    fileId: input.fileId,
+    networkId: input.networkId,
+    actorUserId: input.userId,
+  });
   const timestamp = nowIso();
 
   if (!existing) {
@@ -157,8 +211,8 @@ export function acquireFileLock(input: {
     return { acquired: true, alreadyOwned: false };
   }
 
-  if (!existing.released_at) {
-    if (existing.lock_owner_user_id === input.userId) {
+  if (active) {
+    if (active.lock_owner_user_id === input.userId) {
       return { acquired: true, alreadyOwned: true };
     }
     throw new FileLockError("File is already locked by another user", 409);
@@ -189,8 +243,12 @@ export function releaseFileLock(input: {
   assertNetworkAccess(input.networkId, input.userId);
   assertFileInNetwork(input.networkId, input.fileId);
 
-  const lock = findFileLockByFileIdStmt.get(input.fileId) as FileLockRow | undefined;
-  if (!lock || lock.released_at) {
+  const lock = resolveActiveLockForFile({
+    fileId: input.fileId,
+    networkId: input.networkId,
+    actorUserId: input.userId,
+  });
+  if (!lock) {
     return { released: false };
   }
 
@@ -215,4 +273,33 @@ export function releaseFileLock(input: {
   }
 
   return { released: false };
+}
+
+export function heartbeatFileLock(input: {
+  networkId: string;
+  userId: string;
+  fileId: string;
+}): { renewed: boolean } {
+  assertNetworkAccess(input.networkId, input.userId);
+  assertFileInNetwork(input.networkId, input.fileId);
+
+  const lock = resolveActiveLockForFile({
+    fileId: input.fileId,
+    networkId: input.networkId,
+    actorUserId: input.userId,
+  });
+  if (!lock) {
+    return { renewed: false };
+  }
+
+  if (lock.lock_owner_user_id !== input.userId) {
+    throw new FileLockError("Only lock owner can renew lock heartbeat", 403);
+  }
+
+  const result = updateFileLockHeartbeatStmt.run({
+    id: lock.id,
+    acquired_at: nowIso(),
+  });
+
+  return { renewed: result.changes > 0 };
 }

@@ -90,3 +90,4 @@
 - `GET /storage/trash?networkId=...` — просмотр корзины сети
 - `GET /file-locks/status?networkId=...&fileId=...` — статус блокировки файла
 - `POST /file-locks/lock` / `POST /file-locks/unlock` — взять/снять блокировку редактирования
+- `POST /file-locks/heartbeat` — продлить lock heartbeat (иначе lock истекает по TTL)

@@ -90,3 +90,4 @@ Initial version: `v0.1.0`
 - `GET /storage/trash?networkId=...` — list network trash items
 - `GET /file-locks/status?networkId=...&fileId=...` — check file lock status
 - `POST /file-locks/lock` / `POST /file-locks/unlock` — acquire/release edit lock
+- `POST /file-locks/heartbeat` — renew lock heartbeat (lock expires by TTL without it)

@@ -57,6 +57,9 @@
   - `POST /file-locks/lock` — блокировка файла на редактирование
   - `POST /file-locks/unlock` — снятие блокировки владельцем
   - `GET /file-locks/status` — проверка текущего состояния lock
+- Добавлены TTL + heartbeat для lock:
+  - истечение lock по `FILE_LOCK_TTL_SECONDS` (по умолчанию 120 сек)
+  - endpoint `POST /file-locks/heartbeat` для продления lock
 
 ### Решения
 
@@ -94,11 +97,12 @@
 - `bdeebe7` — `feat(auth): add brute-force rate limiting for auth endpoints`
 - `7a173fe` — `feat(storage): add folders and files metadata APIs with trash`
 - `d6f8753` — `feat(storage): add file lock API for edit ownership`
+- `TBD` — file-lock heartbeat/TTL commit (будет добавлен после фиксации).
 
 ### Планы
 
 - Расширить API сервера модулями auth/devices/networks.
 - Подключить реальную отправку email-кода подтверждения (вместо текущего dev-ответа).
 - Добавить постоянное (distributed) rate-limit хранилище для multi-instance деплоя.
-- Добавить TTL/heartbeat для lock (автоосвобождение при падении клиента).
+- Добавить отдельный lock cleanup job для фоновой очистки протухших lock.
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).

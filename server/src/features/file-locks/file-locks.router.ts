@@ -5,6 +5,7 @@ import {
   acquireFileLock,
   FileLockError,
   getFileLockStatus,
+  heartbeatFileLock,
   releaseFileLock,
 } from "./file-locks.service.js";
 
@@ -20,6 +21,11 @@ const lockBodySchema = z.object({
 });
 
 const unlockBodySchema = z.object({
+  networkId: z.string().uuid(),
+  fileId: z.string().uuid(),
+});
+
+const heartbeatBodySchema = z.object({
   networkId: z.string().uuid(),
   fileId: z.string().uuid(),
 });
@@ -88,6 +94,27 @@ fileLocksRouter.post("/unlock", (req, res) => {
     });
     return res.status(200).json({
       message: result.released ? "File unlocked" : "File was already unlocked",
+      ...result,
+    });
+  } catch (error: unknown) {
+    return respondWithError(res, error);
+  }
+});
+
+fileLocksRouter.post("/heartbeat", (req, res) => {
+  const parsed = heartbeatBodySchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid request body", details: parsed.error.flatten() });
+  }
+
+  try {
+    const result = heartbeatFileLock({
+      networkId: parsed.data.networkId,
+      userId: getAuthUser(req).id,
+      fileId: parsed.data.fileId,
+    });
+    return res.status(200).json({
+      message: result.renewed ? "Lock heartbeat renewed" : "No active lock to renew",
       ...result,
     });
   } catch (error: unknown) {
