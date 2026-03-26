@@ -2,6 +2,7 @@ import request from "supertest";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/app.js";
 import { initializeDatabase, db } from "../src/db/sqlite.js";
+import { resetRateLimitBuckets } from "../src/middleware/rate-limit.js";
 
 const app = createApp();
 const DEFAULT_PASSWORD = "StrongPass123";
@@ -47,6 +48,40 @@ async function registerAndLogin(params: { username: string; email: string }) {
   };
 }
 
+async function prepareNetworkFolderFile(accessToken: string) {
+  const createNetworkRes = await request(app)
+    .post("/networks")
+    .set("Authorization", `Bearer ${accessToken}`)
+    .send({ name: "Shared Network" });
+  expect(createNetworkRes.status).toBe(201);
+  const networkId = createNetworkRes.body.networkId as string;
+
+  const createFolderRes = await request(app)
+    .post("/storage/folders")
+    .set("Authorization", `Bearer ${accessToken}`)
+    .send({
+      networkId,
+      name: "Projects",
+    });
+  expect(createFolderRes.status).toBe(201);
+  const folderId = createFolderRes.body.folderId as string;
+
+  const createFileRes = await request(app)
+    .post("/storage/files")
+    .set("Authorization", `Bearer ${accessToken}`)
+    .send({
+      networkId,
+      folderId,
+      name: "README.txt",
+      sizeBytes: 256,
+      mimeType: "text/plain",
+    });
+  expect(createFileRes.status).toBe(201);
+  const fileId = createFileRes.body.fileId as string;
+
+  return { networkId, folderId, fileId };
+}
+
 describe("SyncNest API integration", () => {
   beforeAll(() => {
     initializeDatabase();
@@ -54,6 +89,7 @@ describe("SyncNest API integration", () => {
 
   beforeEach(() => {
     resetDatabase();
+    resetRateLimitBuckets();
   });
 
   it("completes auth flow and can access protected profile route", async () => {
@@ -215,5 +251,62 @@ describe("SyncNest API integration", () => {
       .get("/auth/me")
       .set("Authorization", `Bearer ${session.accessToken}`);
     expect(meRes.status).toBe(401);
+  });
+
+  it("returns 409 when another user tries to lock an already locked file", async () => {
+    const owner = await registerAndLogin({
+      username: "lock-owner",
+      email: "lock-owner@example.com",
+    });
+    const intruder = await registerAndLogin({
+      username: "lock-intruder",
+      email: "lock-intruder@example.com",
+    });
+
+    const { networkId, fileId } = await prepareNetworkFolderFile(owner.accessToken);
+
+    const ownerLockRes = await request(app)
+      .post("/file-locks/lock")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({ networkId, fileId });
+    expect(ownerLockRes.status).toBe(200);
+    expect(ownerLockRes.body.acquired).toBe(true);
+
+    const intruderLockRes = await request(app)
+      .post("/file-locks/lock")
+      .set("Authorization", `Bearer ${intruder.accessToken}`)
+      .send({ networkId, fileId });
+    expect(intruderLockRes.status).toBe(403);
+  });
+
+  it("returns 403 when non-owner tries to unlock or heartbeat a lock", async () => {
+    const owner = await registerAndLogin({
+      username: "lock-owner-2",
+      email: "lock-owner-2@example.com",
+    });
+    const intruder = await registerAndLogin({
+      username: "lock-intruder-2",
+      email: "lock-intruder-2@example.com",
+    });
+
+    const { networkId, fileId } = await prepareNetworkFolderFile(owner.accessToken);
+
+    const ownerLockRes = await request(app)
+      .post("/file-locks/lock")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({ networkId, fileId });
+    expect(ownerLockRes.status).toBe(200);
+
+    const intruderUnlockRes = await request(app)
+      .post("/file-locks/unlock")
+      .set("Authorization", `Bearer ${intruder.accessToken}`)
+      .send({ networkId, fileId });
+    expect(intruderUnlockRes.status).toBe(403);
+
+    const intruderHeartbeatRes = await request(app)
+      .post("/file-locks/heartbeat")
+      .set("Authorization", `Bearer ${intruder.accessToken}`)
+      .send({ networkId, fileId });
+    expect(intruderHeartbeatRes.status).toBe(403);
   });
 });

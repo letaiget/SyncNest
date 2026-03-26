@@ -72,6 +72,11 @@
 - Добавлены интеграционные API-тесты (`vitest + supertest`):
   - auth flow
   - network + storage + file-lock flow
+- Расширены негативные интеграционные тесты:
+  - unauthorized (`401`)
+  - forbidden cross-user access (`403`)
+  - invalid refresh token (`401`)
+  - lock conflict/ownership cases
 
 ### Решения
 
@@ -113,6 +118,7 @@
 - `710f17a` — `feat(server): add background cleanup job for stale records`
 - `7a168aa` — `feat(server): add prometheus-style metrics endpoint and counters`
 - `1d92b6e` — `test(server): add integration tests for core API flows`
+- `TBD` — negative lock/auth integration tests commit (будет добавлен после фиксации).
 - `7e11b50` — `test(server): add negative integration scenarios for auth and access`
 
 ### Планы
@@ -121,5 +127,5 @@
 - Подключить реальную отправку email-кода подтверждения (вместо текущего dev-ответа).
 - Добавить постоянное (distributed) rate-limit хранилище для multi-instance деплоя.
 - Добавить детализацию метрик по endpoint labels (low-cardinality).
-- Расширить интеграционные тесты кейсами ошибок и конфликтов lock.
+- Добавить тесты TTL истечения lock и cleanup pass эффекта.
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).

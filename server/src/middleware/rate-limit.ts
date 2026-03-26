@@ -7,6 +7,10 @@ type Bucket = {
 
 const buckets = new Map<string, Bucket>();
 
+export function resetRateLimitBuckets(): void {
+  buckets.clear();
+}
+
 function getClientKey(req: Request): string {
   const forwarded = req.headers["x-forwarded-for"];
   const forwardedIp = Array.isArray(forwarded) ? forwarded[0] : forwarded?.split(",")[0]?.trim();
