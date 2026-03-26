@@ -83,3 +83,8 @@
 - `POST /devices/connect` — подключить устройство к сети
 - `POST /devices/:deviceId/disconnect` — отключить устройство от сети
 - `GET /audit-logs?networkId=...&page=...&pageSize=...` — чтение серверных логов сети с пагинацией и фильтрами
+- `GET /storage/folders` / `POST /storage/folders` / `PATCH /storage/folders/:folderId` — управление папками
+- `DELETE /storage/folders/:folderId` / `POST /storage/folders/:folderId/restore` — корзина/восстановление папок
+- `GET /storage/files` / `POST /storage/files` / `PATCH /storage/files/:fileId` — управление файлами (метаданные)
+- `DELETE /storage/files/:fileId` / `POST /storage/files/:fileId/restore` — корзина/восстановление файлов
+- `GET /storage/trash?networkId=...` — просмотр корзины сети

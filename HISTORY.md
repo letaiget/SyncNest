@@ -49,6 +49,10 @@
   - `POST /auth/register/request-code`
   - `POST /auth/login`
   - `POST /auth/refresh`
+- Добавлен core storage API-каркас:
+  - папки (`list/create/update/delete/restore`)
+  - файлы (`list/create/update/delete/restore`)
+  - корзина (`GET /storage/trash`)
 
 ### Решения
 
@@ -84,10 +88,12 @@
 - `1464c6c` — `feat(auth): add logout and logout-all session revocation`
 - `13f7ff4` — `feat(auth): introduce refresh-token based session model`
 - `bdeebe7` — `feat(auth): add brute-force rate limiting for auth endpoints`
+- `TBD` — storage folders/files/trash API commit (будет добавлен после фиксации).
 
 ### Планы
 
 - Расширить API сервера модулями auth/devices/networks.
 - Подключить реальную отправку email-кода подтверждения (вместо текущего dev-ответа).
 - Добавить постоянное (distributed) rate-limit хранилище для multi-instance деплоя.
+- Добавить file-lock API (первый открыл на редактирование -> остальные read-only).
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).

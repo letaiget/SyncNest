@@ -100,5 +100,36 @@ export function initializeDatabase(): void {
 
     CREATE INDEX IF NOT EXISTS idx_access_tokens_user_id ON access_tokens(user_id);
     CREATE INDEX IF NOT EXISTS idx_access_tokens_session_id ON access_tokens(session_id);
+
+    CREATE TABLE IF NOT EXISTS folders (
+      id TEXT PRIMARY KEY,
+      network_id TEXT NOT NULL,
+      parent_folder_id TEXT,
+      name TEXT NOT NULL,
+      deleted_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY(network_id) REFERENCES networks(id),
+      FOREIGN KEY(parent_folder_id) REFERENCES folders(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS files (
+      id TEXT PRIMARY KEY,
+      network_id TEXT NOT NULL,
+      folder_id TEXT,
+      name TEXT NOT NULL,
+      size_bytes INTEGER NOT NULL DEFAULT 0,
+      mime_type TEXT,
+      deleted_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY(network_id) REFERENCES networks(id),
+      FOREIGN KEY(folder_id) REFERENCES folders(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_folders_network_parent ON folders(network_id, parent_folder_id);
+    CREATE INDEX IF NOT EXISTS idx_folders_deleted_at ON folders(deleted_at);
+    CREATE INDEX IF NOT EXISTS idx_files_network_folder ON files(network_id, folder_id);
+    CREATE INDEX IF NOT EXISTS idx_files_deleted_at ON files(deleted_at);
   `);
 }

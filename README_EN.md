@@ -83,3 +83,8 @@ Initial version: `v0.1.0`
 - `POST /devices/connect` — connect device to network
 - `POST /devices/:deviceId/disconnect` — disconnect device from network
 - `GET /audit-logs?networkId=...&page=...&pageSize=...` — read network audit logs with pagination and filters
+- `GET /storage/folders` / `POST /storage/folders` / `PATCH /storage/folders/:folderId` — manage folders
+- `DELETE /storage/folders/:folderId` / `POST /storage/folders/:folderId/restore` — folder trash/restore
+- `GET /storage/files` / `POST /storage/files` / `PATCH /storage/files/:fileId` — manage file metadata
+- `DELETE /storage/files/:fileId` / `POST /storage/files/:fileId/restore` — file trash/restore
+- `GET /storage/trash?networkId=...` — list network trash items
