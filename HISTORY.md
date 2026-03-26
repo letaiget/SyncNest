@@ -97,7 +97,7 @@
 - `bdeebe7` — `feat(auth): add brute-force rate limiting for auth endpoints`
 - `7a173fe` — `feat(storage): add folders and files metadata APIs with trash`
 - `d6f8753` — `feat(storage): add file lock API for edit ownership`
-- `TBD` — file-lock heartbeat/TTL commit (будет добавлен после фиксации).
+- `764feb0` — `feat(storage): add file-lock heartbeat and TTL expiration`
 
 ### Планы
 
