@@ -45,6 +45,10 @@
   - access token (`15 минут`) хранится в `access_tokens`;
   - refresh token (`30 дней`) хранится в `sessions`;
   - добавлен endpoint `POST /auth/refresh`.
+- Добавлен встроенный rate-limit для auth endpoints:
+  - `POST /auth/register/request-code`
+  - `POST /auth/login`
+  - `POST /auth/refresh`
 
 ### Решения
 
@@ -79,9 +83,11 @@
 - `24b3526` — `feat(server): add audit logs listing endpoint`
 - `1464c6c` — `feat(auth): add logout and logout-all session revocation`
 - `13f7ff4` — `feat(auth): introduce refresh-token based session model`
+- `TBD` — auth rate-limit commit (будет добавлен после фиксации).
 
 ### Планы
 
 - Расширить API сервера модулями auth/devices/networks.
 - Подключить реальную отправку email-кода подтверждения (вместо текущего dev-ответа).
+- Добавить постоянное (distributed) rate-limit хранилище для multi-instance деплоя.
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).

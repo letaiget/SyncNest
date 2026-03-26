@@ -76,6 +76,7 @@ Initial version: `v0.1.0`
 - `GET /auth/me` — resolve current user from Bearer token
 - `POST /auth/logout` — terminate current session
 - `POST /auth/logout-all` — terminate all user sessions
+- Brute-force protection: built-in rate limiting for `request-code`, `login`, and `refresh`
 - `GET /networks` — list current user networks
 - `POST /networks` — create network
 - `GET /devices?networkId=...` — list devices in network

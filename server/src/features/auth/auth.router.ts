@@ -11,6 +11,7 @@ import {
   requestRegistrationCode,
 } from "./auth.service.js";
 import { getAuthUser, requireAuth } from "../../middleware/require-auth.js";
+import { createRateLimiter } from "../../middleware/rate-limit.js";
 
 const requestCodeSchema = z.object({
   username: z.string().min(3).max(32),
@@ -45,7 +46,25 @@ function getBearerToken(rawHeader: string | undefined): string | null {
 
 export const authRouter = Router();
 
-authRouter.post("/register/request-code", (req, res) => {
+const requestCodeLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  maxRequests: 5,
+  message: "Too many verification code requests. Please try again later.",
+});
+
+const loginLimiter = createRateLimiter({
+  windowMs: 10 * 60 * 1000,
+  maxRequests: 10,
+  message: "Too many login attempts. Please try again later.",
+});
+
+const refreshLimiter = createRateLimiter({
+  windowMs: 10 * 60 * 1000,
+  maxRequests: 30,
+  message: "Too many token refresh attempts. Please try again later.",
+});
+
+authRouter.post("/register/request-code", requestCodeLimiter, (req, res) => {
   const parsed = requestCodeSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({
@@ -92,7 +111,7 @@ authRouter.post("/register/confirm", (req, res) => {
   }
 });
 
-authRouter.post("/login", (req, res) => {
+authRouter.post("/login", loginLimiter, (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({
@@ -112,7 +131,7 @@ authRouter.post("/login", (req, res) => {
   }
 });
 
-authRouter.post("/refresh", (req, res) => {
+authRouter.post("/refresh", refreshLimiter, (req, res) => {
   const parsed = refreshSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({

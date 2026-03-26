@@ -76,6 +76,7 @@
 - `GET /auth/me` — текущий пользователь по Bearer-токену
 - `POST /auth/logout` — завершить текущую сессию
 - `POST /auth/logout-all` — завершить все активные сессии пользователя
+- Защита auth endpoints от brute-force: встроенный rate-limit для `request-code`, `login`, `refresh`
 - `GET /networks` — список сетей текущего пользователя
 - `POST /networks` — создать сеть
 - `GET /devices?networkId=...` — список устройств сети
