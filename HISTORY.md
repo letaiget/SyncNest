@@ -44,7 +44,7 @@
 
 ### Коммиты
 
-- `TBD` — первый bootstrap commit будет добавлен после инициализации git и push.
+- `b66ef39` — `docs: bootstrap SyncNest repository documentation`
 
 ### Планы
 
