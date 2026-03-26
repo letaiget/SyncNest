@@ -8,6 +8,12 @@ import { runCleanupPassOnce } from "../src/jobs/cleanup.job.js";
 const app = createApp();
 const DEFAULT_PASSWORD = "StrongPass123";
 
+type LockMetrics = {
+  ttlExpirations: number;
+  heartbeatRenewed: number;
+  heartbeatRejected: number;
+};
+
 function resetDatabase(): void {
   db.exec(`
     DELETE FROM access_tokens;
@@ -81,6 +87,31 @@ async function prepareNetworkFolderFile(accessToken: string) {
   const fileId = createFileRes.body.fileId as string;
 
   return { networkId, folderId, fileId };
+}
+
+function extractMetricValue(metricsText: string, metricName: string): number {
+  const line = metricsText
+    .split("\n")
+    .find((entry) => entry.startsWith(`${metricName} `));
+
+  if (!line) {
+    throw new Error(`Metric not found: ${metricName}`);
+  }
+
+  const rawValue = line.split(" ")[1];
+  return Number.parseFloat(rawValue);
+}
+
+async function getLockMetrics(): Promise<LockMetrics> {
+  const metricsRes = await request(app).get("/metrics");
+  expect(metricsRes.status).toBe(200);
+
+  const body = metricsRes.text as string;
+  return {
+    ttlExpirations: extractMetricValue(body, "syncnest_lock_ttl_expirations_total"),
+    heartbeatRenewed: extractMetricValue(body, "syncnest_lock_heartbeat_renewed_total"),
+    heartbeatRejected: extractMetricValue(body, "syncnest_lock_heartbeat_rejected_total"),
+  };
 }
 
 describe("SyncNest API integration", () => {
@@ -397,5 +428,61 @@ describe("SyncNest API integration", () => {
       .query({ networkId, fileId });
     expect(statusRes.status).toBe(200);
     expect(statusRes.body.locked).toBe(true);
+  });
+
+  it("updates lock lifecycle metrics for ttl expiration and heartbeat outcomes", async () => {
+    const before = await getLockMetrics();
+    const owner = await registerAndLogin({
+      username: "metrics-owner",
+      email: "metrics-owner@example.com",
+    });
+    const { networkId, fileId } = await prepareNetworkFolderFile(owner.accessToken);
+
+    const lockRes = await request(app)
+      .post("/file-locks/lock")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({ networkId, fileId });
+    expect(lockRes.status).toBe(200);
+
+    const staleIso = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    db.prepare("UPDATE file_locks SET acquired_at = ? WHERE file_id = ?").run(staleIso, fileId);
+
+    const ttlStatusRes = await request(app)
+      .get("/file-locks/status")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .query({ networkId, fileId });
+    expect(ttlStatusRes.status).toBe(200);
+    expect(ttlStatusRes.body.locked).toBe(false);
+
+    const relockRes = await request(app)
+      .post("/file-locks/lock")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({ networkId, fileId });
+    expect(relockRes.status).toBe(200);
+
+    const heartbeatRenewRes = await request(app)
+      .post("/file-locks/heartbeat")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({ networkId, fileId });
+    expect(heartbeatRenewRes.status).toBe(200);
+    expect(heartbeatRenewRes.body.renewed).toBe(true);
+
+    const unlockRes = await request(app)
+      .post("/file-locks/unlock")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({ networkId, fileId });
+    expect(unlockRes.status).toBe(200);
+
+    const heartbeatRejectedRes = await request(app)
+      .post("/file-locks/heartbeat")
+      .set("Authorization", `Bearer ${owner.accessToken}`)
+      .send({ networkId, fileId });
+    expect(heartbeatRejectedRes.status).toBe(200);
+    expect(heartbeatRejectedRes.body.renewed).toBe(false);
+
+    const after = await getLockMetrics();
+    expect(after.ttlExpirations).toBeGreaterThanOrEqual(before.ttlExpirations + 1);
+    expect(after.heartbeatRenewed).toBeGreaterThanOrEqual(before.heartbeatRenewed + 1);
+    expect(after.heartbeatRejected).toBeGreaterThanOrEqual(before.heartbeatRejected + 1);
   });
 });

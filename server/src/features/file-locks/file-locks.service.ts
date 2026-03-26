@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { db } from "../../db/sqlite.js";
 import { env } from "../../config/env.js";
+import { incCounter } from "../../metrics/metrics.js";
 
 type FileRow = {
   id: string;
@@ -122,6 +123,7 @@ function resolveActiveLockForFile(input: {
       id: lock.id,
       released_at: releasedAt,
     });
+    incCounter("lock_ttl_expirations_total");
     writeAuditLog({
       networkId: input.networkId,
       actorUserId: input.actorUserId,
@@ -289,10 +291,12 @@ export function heartbeatFileLock(input: {
     actorUserId: input.userId,
   });
   if (!lock) {
+    incCounter("lock_heartbeat_rejected_total");
     return { renewed: false };
   }
 
   if (lock.lock_owner_user_id !== input.userId) {
+    incCounter("lock_heartbeat_rejected_total");
     throw new FileLockError("Only lock owner can renew lock heartbeat", 403);
   }
 
@@ -301,5 +305,11 @@ export function heartbeatFileLock(input: {
     acquired_at: nowIso(),
   });
 
-  return { renewed: result.changes > 0 };
+  if (result.changes > 0) {
+    incCounter("lock_heartbeat_renewed_total");
+    return { renewed: true };
+  }
+
+  incCounter("lock_heartbeat_rejected_total");
+  return { renewed: false };
 }
