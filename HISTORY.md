@@ -108,7 +108,7 @@
 - `d6f8753` — `feat(storage): add file lock API for edit ownership`
 - `764feb0` — `feat(storage): add file-lock heartbeat and TTL expiration`
 - `710f17a` — `feat(server): add background cleanup job for stale records`
-- `TBD` — metrics endpoint + counters commit (будет добавлен после фиксации).
+- `7a168aa` — `feat(server): add prometheus-style metrics endpoint and counters`
 
 ### Планы
 
