@@ -61,3 +61,8 @@ Initial version: `v0.1.0`
 - [SECURITY.md](./SECURITY.md) — security policy
 - [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) — code of conduct
 - [LICENSE](./LICENSE) — MIT license
+
+## Current code layout
+
+- `MacOS App Design/` — reference UI prototype (Vite + React)
+- `server/` — central server bootstrap (`Node.js + TypeScript + SQLite`)

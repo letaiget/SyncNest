@@ -61,3 +61,8 @@
 - [SECURITY.md](./SECURITY.md) — политика безопасности
 - [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) — кодекс поведения
 - [LICENSE](./LICENSE) — лицензия MIT
+
+## Текущая структура кода
+
+- `MacOS App Design/` — референсный UI-макет (Vite + React)
+- `server/` — каркас центрального сервера (`Node.js + TypeScript + SQLite`)
