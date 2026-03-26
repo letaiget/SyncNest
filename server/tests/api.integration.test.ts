@@ -142,6 +142,17 @@ describe("SyncNest API integration", () => {
     expect(meRes.body.user.username).toBe("mark");
   });
 
+  it("returns runtime system config snapshot", async () => {
+    const res = await request(app).get("/system/config");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      fileLockTtlSeconds: 120,
+      cleanupIntervalSeconds: 60,
+      auditLogRetentionDays: 1,
+      auditLogRetentionEnabled: true,
+    });
+  });
+
   it("supports network + storage + file lock flow", async () => {
     const requestCodeRes = await request(app).post("/auth/register/request-code").send({
       username: "owner",
