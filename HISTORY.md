@@ -69,7 +69,7 @@
 - `00acb25` — `feat(server): add authentication module and session flow`
 - `ed1e65a` — `feat(server): add networks and devices APIs with audit events`
 - `29b8d67` — `chore(repo): untrack local design reference folder`
-- `TBD` — audit logs listing endpoint commit (будет добавлен после фиксации).
+- `24b3526` — `feat(server): add audit logs listing endpoint`
 
 ### Планы
 
