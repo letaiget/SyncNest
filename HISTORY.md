@@ -90,6 +90,8 @@
   - `syncnest_endpoint_requests_total{group="auth|storage|file_lock"}`
   - `syncnest_endpoint_errors_total{group="auth|storage|file_lock"}`
 - Добавлен интеграционный тест на рост labeled-метрик endpoint групп.
+- Добавлены helper-функции `metrics snapshot/reset` для изоляции in-memory метрик в тестах.
+- Обновлены metric-тесты на детерминированные проверки дельт (без накопительного эффекта между тестами).
 
 ### Решения
 
@@ -137,6 +139,7 @@
 - `e03d226` — `test(server): add heartbeat lock renewal integration test`
 - `839dc90` — `feat(metrics): add lock lifecycle counters and coverage`
 - `0dbf1e3` — `feat(metrics): add endpoint-group labeled counters`
+- `a174be5` — `test(metrics): isolate in-memory counters with snapshot reset`
 
 ### Планы
 
@@ -146,4 +149,5 @@
 - Добавить детализацию метрик по endpoint labels (low-cardinality).
 - Добавить low-cardinality labels для метрик endpoint групп (auth/storage/file-lock).
 - Добавить reset/isolated snapshot helper для in-memory metrics в тестах.
+- Добавить очистку/ротацию audit_logs по retention-политике (после согласования срока хранения).
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).
