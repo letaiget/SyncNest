@@ -106,6 +106,14 @@
   - оценивает кандидатов на cleanup без изменения данных в БД
   - считает `expiredVerificationCodes`, `expiredFileLocks`, `expiredAccessTokens`, `auditLogsForDeletion`
 - Добавлен интеграционный тест `GET /system/config/cleanup-dry-run`.
+- Добавлен endpoint `POST /system/config/cleanup/run` (manual trigger):
+  - требует авторизацию (`Bearer`)
+  - запускает cleanup pass и возвращает агрегированную статистику изменений
+  - пишет audit event `system.cleanup.manual.run` в сети пользователя
+- Добавлены метрики ручного запуска cleanup:
+  - `syncnest_cleanup_manual_runs_total`
+  - `syncnest_cleanup_manual_errors_total`
+- Добавлен интеграционный тест для manual cleanup trigger (`401` без токена + успешный запуск + audit + metrics).
 
 ### Решения
 
@@ -157,6 +165,7 @@
 - `c20ce95` — `feat(server): add audit log retention cleanup policy`
 - `3401582` — `feat(server): add runtime system config endpoint`
 - `d5106a7` — `feat(server): add cleanup dry-run system endpoint`
+- `f07f4b1` — `feat(server): add manual cleanup trigger endpoint`
 
 ### Планы
 
@@ -168,4 +177,5 @@
 - Добавить reset/isolated snapshot helper для in-memory metrics в тестах.
 - Добавить endpoint/инструмент просмотра retention-конфига и dry-run cleanup статистики.
 - Добавить ручной trigger endpoint для cleanup pass (admin-only, с audit event).
+- Добавить роль/политику доступа для system endpoints (owner/admin scope).
 - Подготовить стартовую структуру desktop-клиентов (`macOS Swift`, `Windows C#`).
